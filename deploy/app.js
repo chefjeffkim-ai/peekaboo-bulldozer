@@ -29,6 +29,32 @@
     dt_choice_apples: 'Carry the sweet red apples! Yummy, zoom, zoom!',
     peek_hide: 'Where did it go? Tap the wooden door!',
     bd_bye: 'Goodnight, big machines! Bye-bye! See you tomorrow!',
+    az_a: 'A! Apple! Crunch, crunch!',
+    az_b: 'B! Bulldozer! Rumble-rumble!',
+    az_c: 'C! Car! Beep-beep!',
+    az_d: 'D! Dog! Woof-woof!',
+    az_e: 'E! Elephant! Pawoo!',
+    az_f: 'F! Fish! Splash, splash!',
+    az_g: 'G! Grapes! Yummy, yummy!',
+    az_h: 'H! Hat! Put it on!',
+    az_i: 'I! Ice cream! So sweet!',
+    az_j: 'J! Jelly! Boing, boing!',
+    az_k: 'K! Kite! Fly up high!',
+    az_l: 'L! Lion! Roar!',
+    az_m: 'M! Monkey! Ooh-ooh, aah-aah!',
+    az_n: 'N! Nose! Boop!',
+    az_o: 'O! Orange! Juicy!',
+    az_p: 'P! Pig! Oink-oink!',
+    az_q: 'Q! Queen! Sparkle, sparkle!',
+    az_r: 'R! Rabbit! Hop, hop, hop!',
+    az_s: 'S! Sun! Good morning!',
+    az_t: 'T! Truck! Honk-honk!',
+    az_u: 'U! Umbrella! Rain, rain!',
+    az_v: 'V! Van! Vroom-vroom!',
+    az_w: 'W! Water! Gulp, gulp!',
+    az_x: 'X! Xylophone! Ding-dong-dang!',
+    az_y: 'Y! Yo-yo! Up and down!',
+    az_z: 'Z! Zebra! Gallop, gallop!',
   };
 
   const ANIM_CLASSES = [
@@ -309,7 +335,11 @@
   const SPEED_STORAGE_KEY = 'peekaboo_voice_speed';
   const AUDIO_BASE_PATH = 'audio/';
 
+  let appMode = 'machines'; // 'machines' (includes cover at index 0) | 'az'
   let currentIndex = 0;
+  let azIndex = 0;
+  let azGridOpen = false;
+  let listenCueTimer = null;
   let soundEnabled = true;
   let isPeekCovered = false;
   let voiceSpeedMode = loadSavedSpeedMode(); // 'slow' | 'normal'
@@ -333,6 +363,7 @@
   const reactionCursor = { bulldozer: 0, excavator: 0, dumptruck: 0 };
 
   // DOM References
+  const homeBtn = document.getElementById('homeBtn');
   const bookStage = document.getElementById('bookStage');
   const progressDots = document.getElementById('progressDots');
   const bottomNav = document.getElementById('bottomNav');
@@ -468,14 +499,45 @@
   }
 
   // --- Rapid-Tap-Safe Voice Stopper ---
+  function clearListenCue() {
+    if (listenCueTimer) {
+      clearTimeout(listenCueTimer);
+      listenCueTimer = null;
+    }
+    const cue = document.getElementById('listenCue');
+    if (cue) {
+      cue.classList.remove('is-listening');
+      const label = document.getElementById('listenCueText');
+      if (label) label.textContent = '그림을 톡! 누르면 단어를 들려줘요';
+    }
+  }
+
+  function startThreeSecondListenCue(wordLabel) {
+    clearListenCue();
+    const cue = document.getElementById('listenCue');
+    if (!cue) return;
+    const label = document.getElementById('listenCueText');
+    if (label) label.textContent = `따라 말해 볼까요? "${wordLabel}!"`;
+    cue.classList.remove('is-listening');
+    void cue.offsetWidth;
+    cue.classList.add('is-listening');
+    listenCueTimer = setTimeout(() => {
+      listenCueTimer = null;
+      cue.classList.remove('is-listening');
+      if (label) label.textContent = '잘했어요! 또 눌러 볼까요? ✨';
+    }, 3000);
+  }
+
   function stopActiveVoice() {
     voicePlayToken += 1;
+    clearListenCue();
     if (speechTimer) {
       clearTimeout(speechTimer);
       speechTimer = null;
     }
     if (activeAudioEl) {
       try {
+        activeAudioEl.onended = null;
         activeAudioEl.pause();
         activeAudioEl.currentTime = 0;
       } catch (_) {}
@@ -488,9 +550,18 @@
     }
   }
 
-  function speakWebSpeechFallback(text, token) {
+  function speakWebSpeechFallback(text, token, onComplete) {
     if (!soundEnabled || !text || token !== voicePlayToken) return;
-    if (!('speechSynthesis' in window)) return;
+    if (!('speechSynthesis' in window)) {
+      if (onComplete) onComplete();
+      return;
+    }
+    let finished = false;
+    const done = () => {
+      if (finished || token !== voicePlayToken) return;
+      finished = true;
+      if (onComplete) onComplete();
+    };
     try {
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
@@ -499,30 +570,43 @@
       u.rate = getSpeechRate();
       u.pitch = 1.12;
       u.volume = 0.96;
+      u.onend = done;
+      u.onerror = done;
       window.speechSynthesis.speak(u);
-    } catch (_) {}
+      // Safety fallback if browser speechSynthesis omits onend
+      setTimeout(done, Math.max(1600, Math.min(4200, text.length * 85)));
+    } catch (_) {
+      done();
+    }
   }
 
-  function playAudioElement(el, fallbackText, token) {
+  function playAudioElement(el, fallbackText, token, onComplete) {
     if (!soundEnabled || token !== voicePlayToken) return;
     try {
+      el.onended = null;
       el.pause();
       el.currentTime = 0;
       el.playbackRate = getAudioPlaybackRate();
       el.volume = 1.0;
       activeAudioEl = el;
+      el.onended = () => {
+        if (token === voicePlayToken) {
+          activeAudioEl = null;
+          if (onComplete) onComplete();
+        }
+      };
       const playPromise = el.play();
       if (playPromise && typeof playPromise.catch === 'function') {
         playPromise.catch(() => {
           if (token === voicePlayToken) {
             activeAudioEl = null;
-            speakWebSpeechFallback(fallbackText, token);
+            speakWebSpeechFallback(fallbackText, token, onComplete);
           }
         });
       }
     } catch (_) {
       activeAudioEl = null;
-      speakWebSpeechFallback(fallbackText, token);
+      speakWebSpeechFallback(fallbackText, token, onComplete);
     }
   }
 
@@ -531,7 +615,7 @@
    *  1) Priority 1: Pre-generated Gemini audio in deploy/audio/ (<id>.mp3 or .wav) with playbackRate
    *  2) Priority 2: Automatic error-free fallback to browser Web Speech API (en-US)
    */
-  function playVoiceLine(audioId, delayMs = 95) {
+  function playVoiceLine(audioId, delayMs = 95, onComplete = null) {
     stopActiveVoice();
     if (!soundEnabled || !audioId) return;
     const fallbackText = AUDIO_MANIFEST[audioId] || '';
@@ -541,21 +625,18 @@
       speechTimer = null;
       if (!soundEnabled || token !== voicePlayToken) return;
 
-      // Priority 1 (instant <0.01s if preloaded from audio_manifest.json)
       if (audioPool[audioId]) {
-        playAudioElement(audioPool[audioId], fallbackText, token);
+        playAudioElement(audioPool[audioId], fallbackText, token, onComplete);
         return;
       }
 
-      // One-time lightweight probe in case user manually dropped a file in deploy/audio/
       const probedEl = await probeSingleAudioFile(audioId);
       if (token !== voicePlayToken || !soundEnabled) return;
 
       if (probedEl) {
-        playAudioElement(probedEl, fallbackText, token);
+        playAudioElement(probedEl, fallbackText, token, onComplete);
       } else {
-        // Priority 2: Smooth en-US Web Speech API fallback
-        speakWebSpeechFallback(fallbackText, token);
+        speakWebSpeechFallback(fallbackText, token, onComplete);
       }
     }, delayMs);
   }
@@ -807,6 +888,76 @@
         addTone(ctx, bus, 392.0, 0.56, 0.62, 'sine', 0.12);
         break;
 
+      case 'az_crunch':
+        addFilteredNoise(ctx, bus, 0.0, 0.12, 900, 320, 0.2);
+        addFilteredNoise(ctx, bus, 0.14, 0.13, 850, 280, 0.18);
+        addTone(ctx, bus, 523.25, 0.22, 0.16, 'sine', 0.14);
+        break;
+
+      case 'az_woof':
+        addTone(ctx, bus, 320, 0.0, 0.12, 'triangle', 0.22, 180);
+        addTone(ctx, bus, 350, 0.16, 0.14, 'triangle', 0.22, 175);
+        break;
+
+      case 'az_elephant':
+        addTone(ctx, bus, 260, 0.0, 0.18, 'sawtooth', 0.1, 640);
+        addTone(ctx, bus, 640, 0.16, 0.28, 'triangle', 0.18, 490);
+        break;
+
+      case 'az_splash':
+        addFilteredNoise(ctx, bus, 0.0, 0.34, 620, 1500, 0.18);
+        addTone(ctx, bus, 380, 0.05, 0.15, 'sine', 0.14, 680);
+        addTone(ctx, bus, 480, 0.18, 0.18, 'sine', 0.14, 820);
+        break;
+
+      case 'az_roar':
+        addTone(ctx, bus, 170, 0.0, 0.38, 'sawtooth', 0.12, 95);
+        addTone(ctx, bus, 130, 0.04, 0.34, 'triangle', 0.18, 82);
+        addFilteredNoise(ctx, bus, 0.04, 0.34, 380, 150, 0.14);
+        break;
+
+      case 'az_monkey':
+        addTone(ctx, bus, 460, 0.0, 0.12, 'sine', 0.18, 720);
+        addTone(ctx, bus, 520, 0.14, 0.14, 'sine', 0.18, 840);
+        addTone(ctx, bus, 480, 0.28, 0.15, 'sine', 0.16, 680);
+        break;
+
+      case 'az_boop':
+        addTone(ctx, bus, 340, 0.0, 0.18, 'sine', 0.22, 760);
+        break;
+
+      case 'az_oink':
+        addTone(ctx, bus, 230, 0.0, 0.11, 'sawtooth', 0.1, 310);
+        addTone(ctx, bus, 250, 0.15, 0.12, 'sawtooth', 0.1, 330);
+        break;
+
+      case 'az_hop':
+        addTone(ctx, bus, 330, 0.0, 0.1, 'sine', 0.17, 560);
+        addTone(ctx, bus, 380, 0.14, 0.1, 'sine', 0.17, 640);
+        addTone(ctx, bus, 440, 0.28, 0.13, 'sine', 0.18, 760);
+        break;
+
+      case 'az_rain':
+        addTone(ctx, bus, 880, 0.0, 0.09, 'sine', 0.12);
+        addTone(ctx, bus, 740, 0.09, 0.09, 'sine', 0.12);
+        addTone(ctx, bus, 988, 0.18, 0.09, 'sine', 0.12);
+        addTone(ctx, bus, 659, 0.27, 0.12, 'sine', 0.12);
+        break;
+
+      case 'az_xylophone':
+        addTone(ctx, bus, 523.25, 0.0, 0.16, 'sine', 0.2);
+        addTone(ctx, bus, 659.25, 0.1, 0.16, 'sine', 0.2);
+        addTone(ctx, bus, 783.99, 0.2, 0.18, 'sine', 0.2);
+        addTone(ctx, bus, 1046.5, 0.3, 0.32, 'sine', 0.21);
+        break;
+
+      case 'az_gallop':
+        addTone(ctx, bus, 190, 0.0, 0.07, 'triangle', 0.2);
+        addTone(ctx, bus, 240, 0.08, 0.07, 'triangle', 0.19);
+        addTone(ctx, bus, 190, 0.22, 0.07, 'triangle', 0.2);
+        addTone(ctx, bus, 240, 0.30, 0.08, 'triangle', 0.19);
+        break;
+
       case 'chime':
       default:
         addTone(ctx, bus, 440, 0.0, 0.16, 'sine', 0.14);
@@ -946,8 +1097,19 @@
   }
 
   function updateChrome() {
+    if (appMode === 'az') {
+      document.body.classList.remove('theme-sleepy');
+      if (homeBtn) homeBtn.hidden = false;
+      progressDots.style.visibility = 'hidden';
+      bottomNav.style.visibility = 'hidden';
+      bottomNav.style.pointerEvents = 'none';
+      return;
+    }
+
     const scene = SCENES[currentIndex];
     document.body.classList.toggle('theme-sleepy', scene.type === 'sleepy');
+    if (homeBtn) homeBtn.hidden = scene.type === 'cover';
+    progressDots.style.visibility = 'visible';
     renderDots();
 
     if (scene.type === 'cover') {
@@ -975,7 +1137,217 @@
     }
   }
 
+  function openAzMode(startIdx = 0) {
+    stopActiveVoice();
+    stopActiveSfx();
+    appMode = 'az';
+    azIndex = Math.max(0, Math.min((window.AZ_WORDS || []).length - 1, startIdx));
+    azGridOpen = false;
+    renderAzMode(true);
+  }
+
+  function goHome() {
+    stopActiveVoice();
+    stopActiveSfx();
+    appMode = 'machines';
+    currentIndex = 0;
+    renderScene(false);
+  }
+
+  function renderAzMode(autoPlayCurrent = false) {
+    const words = window.AZ_WORDS || [];
+    if (!words.length) return;
+    const item = words[azIndex] || words[0];
+    updateChrome();
+
+    const chipsHtml = words
+      .map(
+        (w, i) => `
+          <button
+            class="az-chip ${i === azIndex ? 'is-active' : ''}"
+            type="button"
+            data-az-idx="${i}"
+            style="--az-accent:${w.accent}"
+            aria-label="${w.letter} ${w.word}"
+            aria-current="${i === azIndex ? 'true' : 'false'}"
+          >${w.letter}</button>
+        `
+      )
+      .join('');
+
+    const gridHtml = words
+      .map(
+        (w, i) => `
+          <button
+            class="az-mini-card ${i === azIndex ? 'is-active' : ''}"
+            type="button"
+            data-az-mini="${i}"
+            style="--az-bg:${w.bg};--az-accent:${w.accent}"
+            aria-label="${w.letter} ${w.word} (${w.ko})"
+          >
+            <div class="az-mini-svg">${w.svg}</div>
+            <div class="az-mini-letter">${w.letter}${w.lower}</div>
+            <div class="az-mini-word">${w.word}</div>
+          </button>
+        `
+      )
+      .join('');
+
+    bookStage.innerHTML = `
+      <section class="az-card-shell">
+        <div class="az-header-row">
+          <div class="az-mode-badge">🔤 A~Z 알파벳 그림 단어 놀이터 (${azIndex + 1}/26)</div>
+          <button class="az-view-toggle" id="azViewToggleBtn" type="button">
+            ${azGridOpen ? '🔍 크게 보기' : '🗂️ 전체 A~Z 보기'}
+          </button>
+        </div>
+
+        <div class="az-strip" id="azStrip" role="tablist" aria-label="알파벳 A부터 Z 선택">
+          ${chipsHtml}
+        </div>
+
+        ${
+          azGridOpen
+            ? `<div class="az-grid-view" id="azGridView">${gridHtml}</div>`
+            : `
+              <div class="az-hero-row">
+                <button class="az-arrow-btn" id="azPrevBtn" type="button" aria-label="이전 알파벳">◀</button>
+
+                <div
+                  class="az-hero-card"
+                  id="azHeroCard"
+                  role="button"
+                  tabindex="0"
+                  style="--az-bg:${item.bg};--az-accent:${item.accent}"
+                  aria-label="${item.letter} ${item.word}: ${item.sentence}"
+                >
+                  <div class="peekaboo-pop" id="azPop">${item.pop}</div>
+                  <div class="az-svg-wrap" id="azSvgWrap">${item.svg}</div>
+                  <div class="az-word-block">
+                    <div class="az-letters">
+                      <span class="az-letter-upper">${item.letter}</span><span>${item.lower}</span>
+                    </div>
+                    <div class="az-word-row">
+                      <span class="az-word-en">${item.word}</span>
+                      <span class="az-word-ko">${item.ko}</span>
+                    </div>
+                    <div class="az-sentence-pill">
+                      <span aria-hidden="true">🔊</span>
+                      <span>${item.sentence}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button class="az-arrow-btn" id="azNextBtn" type="button" aria-label="다음 알파벳">▶</button>
+              </div>
+
+              <div class="listen-cue" id="listenCue" aria-live="polite">
+                <span class="listen-ear" aria-hidden="true">👂</span>
+                <div class="listen-waves" aria-hidden="true">
+                  <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <span id="listenCueText">그림을 톡! 누르면 단어를 들려줘요</span>
+                <div class="listen-timer-bar" aria-hidden="true"><div class="listen-timer-fill"></div></div>
+              </div>
+            `
+        }
+      </section>
+    `;
+
+    // Keep active A~Z chip centered in the top strip
+    const activeChip = bookStage.querySelector('.az-chip.is-active');
+    if (activeChip && typeof activeChip.scrollIntoView === 'function') {
+      activeChip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+
+    document.getElementById('azViewToggleBtn').addEventListener('click', () => {
+      playSoundEffect('chime');
+      azGridOpen = !azGridOpen;
+      renderAzMode(false);
+    });
+
+    bookStage.querySelectorAll('.az-chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const nextIdx = Number(chip.dataset.azIdx);
+        azIndex = nextIdx;
+        azGridOpen = false;
+        renderAzMode(true);
+      });
+    });
+
+    if (azGridOpen) {
+      bookStage.querySelectorAll('.az-mini-card').forEach((mini) => {
+        mini.addEventListener('click', () => {
+          azIndex = Number(mini.dataset.azMini);
+          azGridOpen = false;
+          renderAzMode(true);
+        });
+      });
+      return;
+    }
+
+    const azHeroCard = document.getElementById('azHeroCard');
+    const azPop = document.getElementById('azPop');
+    let lastAzTapTs = 0;
+
+    const triggerAzCard = (e) => {
+      const now = performance.now();
+      if (now - lastAzTapTs < 45) return;
+      lastAzTapTs = now;
+
+      const rect = azHeroCard.getBoundingClientRect();
+      const cx = (e && e.clientX) || rect.left + rect.width / 2;
+      const cy = (e && e.clientY) || rect.top + rect.height / 2;
+
+      // 1) Instant (<0.01s) SFX + animation + sparkles + touch ripple
+      clearListenCue();
+      playSoundEffect(item.sfx || 'chime');
+      triggerAnimation(azHeroCard, item.anim || 'anim-bounce');
+      spawnTouchRipple(azHeroCard, cx, cy);
+      showPopBanner(azPop, item.pop);
+      spawnSparkles(cx, cy, item.sparkles || ['⭐', '✨'], 8);
+
+      // 2) Hybrid voice playback -> followed by 3-second repeat-after-me wave cue!
+      playVoiceLine(item.audioId, 85, () => {
+        if (appMode === 'az' && !azGridOpen) {
+          startThreeSecondListenCue(item.word);
+        }
+      });
+    };
+
+    azHeroCard.addEventListener('pointerdown', (e) => {
+      if (e.button && e.button !== 0) return;
+      triggerAzCard(e);
+    });
+
+    azHeroCard.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        triggerAzCard(e);
+      }
+    });
+
+    document.getElementById('azPrevBtn').addEventListener('click', () => {
+      azIndex = (azIndex - 1 + words.length) % words.length;
+      renderAzMode(true);
+    });
+
+    document.getElementById('azNextBtn').addEventListener('click', () => {
+      azIndex = (azIndex + 1) % words.length;
+      renderAzMode(true);
+    });
+
+    if (autoPlayCurrent) {
+      triggerAzCard(null);
+    }
+  }
+
   function renderScene(startCovered = false) {
+    if (appMode === 'az') {
+      renderAzMode(false);
+      return;
+    }
+
     const scene = SCENES[currentIndex];
     isPeekCovered = scene.type === 'hero' && startCovered;
     updateChrome();
@@ -984,27 +1356,44 @@
       bookStage.innerHTML = `
         <section class="story-card cover-card">
           <div class="cover-badge">${scene.badge}</div>
-          <button class="cover-icon-btn" id="coverIconBtn" type="button" aria-label="노란 불도저 아이콘 눌러서 시작하기">
+          <button class="cover-icon-btn" id="coverIconBtn" type="button" aria-label="노란 불도저 아이콘 눌러서 중장비 놀이 시작하기">
             <div class="cover-icon-frame">
               <img src="${scene.asset}" alt="${scene.assetDesc}" />
             </div>
           </button>
           <h1 class="cover-title">${scene.title}</h1>
           <p class="cover-subtitle">${scene.subtitle}</p>
-          <button class="big-start-btn" id="startBookBtn" type="button">
-            <span>까꿍 놀이 시작하기</span>
-            <span aria-hidden="true">✨</span>
-          </button>
+          <div class="mode-grid">
+            <button class="mode-card mode-card--machines" id="startMachinesBtn" type="button">
+              <div class="mode-icon-circle">
+                <img src="${scene.asset}" alt="중장비 놀이" />
+              </div>
+              <span class="mode-title">🚜 중장비 놀이</span>
+              <span class="mode-desc">불도저 · 포크레인 · 덤프트럭</span>
+            </button>
+            <button class="mode-card mode-card--az" id="startAzBtn" type="button">
+              <div class="mode-icon-circle" aria-hidden="true">🔤</div>
+              <span class="mode-title">🔤 A~Z 단어 놀이</span>
+              <span class="mode-desc">알파벳 26 그림 단어 놀이터</span>
+            </button>
+          </div>
         </section>
       `;
 
-      const startHandler = (e) => {
+      const startMachinesHandler = (e) => {
         playSoundEffect('chime');
         spawnSparkles(e.clientX || window.innerWidth / 2, e.clientY || window.innerHeight / 2);
+        appMode = 'machines';
         goToScene(1, false);
       };
-      document.getElementById('startBookBtn').addEventListener('click', startHandler);
-      document.getElementById('coverIconBtn').addEventListener('click', startHandler);
+      const startAzHandler = (e) => {
+        playSoundEffect('az_xylophone');
+        spawnSparkles(e.clientX || window.innerWidth / 2, e.clientY || window.innerHeight / 2, ['🔤', '⭐', '✨']);
+        openAzMode(0);
+      };
+      document.getElementById('startMachinesBtn').addEventListener('click', startMachinesHandler);
+      document.getElementById('coverIconBtn').addEventListener('click', startMachinesHandler);
+      document.getElementById('startAzBtn').addEventListener('click', startAzHandler);
       return;
     }
 
@@ -1378,9 +1767,17 @@
       `;
       card.addEventListener('click', () => {
         assetModal.hidden = true;
+        appMode = 'machines';
         goToScene(idx, false);
       });
       assetGrid.appendChild(card);
+    });
+  }
+
+  if (homeBtn) {
+    homeBtn.addEventListener('click', () => {
+      playSoundEffect('chime');
+      goHome();
     });
   }
 
@@ -1406,6 +1803,18 @@
     }
     if (!assetModal.hidden && e.key === 'Escape') {
       assetModal.hidden = true;
+      return;
+    }
+    if (appMode === 'az' && !azGridOpen) {
+      const words = window.AZ_WORDS || [];
+      if (!words.length) return;
+      if (e.key === 'ArrowRight') {
+        azIndex = (azIndex + 1) % words.length;
+        renderAzMode(true);
+      } else if (e.key === 'ArrowLeft') {
+        azIndex = (azIndex - 1 + words.length) % words.length;
+        renderAzMode(true);
+      }
       return;
     }
     if (e.key === 'ArrowRight') nextBtn.click();

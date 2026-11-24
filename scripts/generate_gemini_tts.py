@@ -285,7 +285,8 @@ def main() -> None:
         default="auto",
         help="Output format (auto picks mp3 when ffmpeg is available, otherwise wav).",
     )
-    parser.add_argument("--only", nargs="+", help="Generate only specific audio IDs (e.g. bd_tap_1 bd_tap_2).")
+    parser.add_argument("--only", nargs="+", help="Generate only specific audio IDs (e.g. bd_tap_1 az_a).")
+    parser.add_argument("--az-only", action="store_true", help="Generate only A-Z alphabet lines (az_a through az_z).")
     parser.add_argument("--overwrite", action="store_true", help="Overwrite existing audio files.")
     parser.add_argument("--delay", type=float, default=0.6, help="Pause in seconds between API requests.")
     parser.add_argument(
@@ -311,11 +312,15 @@ def main() -> None:
         print(f"Synced audio_manifest.json ({total}/{len(manifest['lines'])} files present).")
         return
 
+    only_ids = args.only
+    if args.az_only and not only_ids:
+        only_ids = [k for k in manifest.get("lines", {}) if k.startswith("az_")]
+
     generate_lines(
         manifest=manifest,
         voice_name=args.voice,
         fmt=args.format,
-        only_ids=args.only,
+        only_ids=only_ids,
         overwrite=args.overwrite,
         delay_sec=args.delay,
     )
