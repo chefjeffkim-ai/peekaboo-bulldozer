@@ -1,6 +1,36 @@
 (() => {
   'use strict';
 
+  // --- Full Audio Manifest (maps every voice ID to audio/<id>.mp3|.wav + en-US fallback text) ---
+  const AUDIO_MANIFEST = {
+    cover_welcome: "Peek-a-boo! Heavy machines! Let's play!",
+    door_knock: 'Knock, knock! Who is inside?',
+    door_open: 'Knock, knock! Peek-a-boo!',
+    bd_peekaboo: 'Peek-a-boo! Big yellow bulldozer!',
+    bd_tap_1: 'Rumble-rumble! Big yellow bulldozer!',
+    bd_tap_2: 'Beep-beep! Watch out!',
+    bd_tap_3: 'Push, push, push! So strong!',
+    bd_tap_4: 'Yay! Go, bulldozer, go!',
+    bd_choice_rock: 'Push the big rock! Crunch, push, push!',
+    bd_choice_jelly: 'Push the bouncy jelly! Boing, wiggle, giggle!',
+    ex_peekaboo: 'Peek-a-boo! Cute orange excavator!',
+    ex_tap_1: 'Dig, dig, scoop! Big orange excavator!',
+    ex_tap_2: 'Turn around! Swish, swish, swish!',
+    ex_tap_3: 'Beep-beep! Ready to dig!',
+    ex_tap_4: 'Yay! Go, excavator, go!',
+    ex_choice_sand: 'Scoop the golden sand! Dig, dig, hooray!',
+    ex_choice_duck: 'Surprise! A little yellow duck! Quack, quack!',
+    dt_peekaboo: 'Peek-a-boo! Strong blue dump truck!',
+    dt_tap_1: 'Tip and dump! Whoosh goes the sand!',
+    dt_tap_2: 'Honk-honk! Big blue dump truck!',
+    dt_tap_3: 'Vroom-vroom! Carry the rocks!',
+    dt_tap_4: 'Yay! Go, dump truck, go!',
+    dt_choice_stones: 'Load the heavy stones! Clunk, clunk, dump!',
+    dt_choice_apples: 'Carry the sweet red apples! Yummy, zoom, zoom!',
+    peek_hide: 'Where did it go? Tap the wooden door!',
+    bd_bye: 'Goodnight, big machines! Bye-bye! See you tomorrow!',
+  };
+
   const ANIM_CLASSES = [
     'anim-rumble',
     'anim-flash',
@@ -10,6 +40,7 @@
     'anim-scoop',
     'anim-swivel',
     'anim-dump',
+    'anim-jelly',
     'is-bouncing',
     'is-knocking',
   ];
@@ -25,7 +56,7 @@
       title: '까꿍! 불도저와 중장비 친구들',
       subtitle: 'Peek-a-boo Heavy Machines',
       badge: '1~3세 그림책 놀이',
-      speechKo: '까꿍! 불도저와 중장비 친구들!',
+      audioId: 'cover_welcome',
       soundKind: 'chime',
     },
     {
@@ -39,7 +70,8 @@
       soundWord: '나무 문을 톡톡 눌러 보세요!',
       pillClass: 'sound-word-pill--door',
       tapHint: '문을 톡! 두드려 까꿍!',
-      speechEn: 'Knock, knock! Who is inside?',
+      audioId: 'door_knock',
+      openAudioId: 'door_open',
       soundKind: 'knock',
     },
     {
@@ -52,46 +84,64 @@
       title: '까꿍! 노란 불도저야!',
       soundWord: '불도저 몸통을 톡톡 눌러 보세요!',
       pillClass: 'sound-word-pill--yellow',
-      tapHint: '불도저를 톡! 눌러 보세요',
+      tapHint: '불도저 몸통을 톡! 눌러 보세요',
       popText: '까꿍! 불도저!',
-      revealSpeechEn: 'Peek-a-boo! Yellow bulldozer!',
+      revealAudioId: 'bd_peekaboo',
       sparkles: ['⭐', '✨', '💛'],
       reactions: [
         {
+          audioId: 'bd_tap_1',
           anim: 'anim-rumble',
           sfx: 'engine_rumble',
           fx: 'smoke_dust',
           pop: '부르르~ Rumble-rumble!',
-          caption: 'Rumble-rumble! Big yellow bulldozer!',
-          speechEn: 'Rumble-rumble! Big yellow bulldozer!',
           sparkles: ['💨', '💛', '✨'],
         },
         {
+          audioId: 'bd_tap_2',
           anim: 'anim-flash',
           sfx: 'beep_beep',
           fx: 'headlights',
           pop: '빵빵! Beep-beep!',
-          caption: 'Beep-beep! Watch out!',
-          speechEn: 'Beep-beep! Watch out!',
           sparkles: ['💡', '✨', '💛'],
         },
         {
+          audioId: 'bd_tap_3',
           anim: 'anim-push',
           sfx: 'push_strong',
           fx: 'push_dirt',
           pop: '영차! Push, push!',
-          caption: 'Push, push, push! So strong!',
-          speechEn: 'Push, push, push! So strong!',
           sparkles: ['💪', '💨', '⭐'],
         },
         {
+          audioId: 'bd_tap_4',
           anim: 'anim-bounce',
           sfx: 'yay_bounce',
           fx: 'stars',
           pop: '야호! Go, bulldozer!',
-          caption: 'Yay! Go, bulldozer, go!',
-          speechEn: 'Yay! Go, bulldozer, go!',
           sparkles: ['⭐', '🌟', '✨', '💛'],
+        },
+      ],
+      choices: [
+        {
+          emoji: '🪨',
+          label: '큰 돌 밀기',
+          audioId: 'bd_choice_rock',
+          anim: 'anim-push',
+          sfx: 'push_strong',
+          fx: 'push_dirt',
+          pop: '영차! Big rock!',
+          sparkles: ['🪨', '💨', '💪'],
+        },
+        {
+          emoji: '🍮',
+          label: '젤리 밀기',
+          audioId: 'bd_choice_jelly',
+          anim: 'anim-jelly',
+          sfx: 'jelly_boing',
+          fx: 'stars',
+          pop: '출렁출렁! Boing!',
+          sparkles: ['🍮', '✨', '💛'],
         },
       ],
     },
@@ -105,46 +155,64 @@
       title: '까꿍! 주황 포크레인이야!',
       soundWord: '포크레인 몸통을 톡톡 눌러 보세요!',
       pillClass: 'sound-word-pill--orange',
-      tapHint: '포크레인을 톡! 눌러 보세요',
+      tapHint: '포크레인 몸통을 톡! 눌러 보세요',
       popText: '까꿍! 포크레인!',
-      revealSpeechEn: 'Peek-a-boo! Orange excavator!',
+      revealAudioId: 'ex_peekaboo',
       sparkles: ['🧡', '✨', '🌼'],
       reactions: [
         {
+          audioId: 'ex_tap_1',
           anim: 'anim-scoop',
           sfx: 'dig_scoop',
           fx: 'sand_scoop',
           pop: '푹푹! Dig & scoop!',
-          caption: 'Dig, dig, scoop! Big orange excavator!',
-          speechEn: 'Dig, dig, scoop! Big orange excavator!',
           sparkles: ['🧡', '✨', '🌼'],
         },
         {
+          audioId: 'ex_tap_2',
           anim: 'anim-swivel',
           sfx: 'swivel_whir',
           fx: 'smoke_dust',
           pop: '빙글빙글! Turn around!',
-          caption: 'Turn around! Swish, swish, swish!',
-          speechEn: 'Turn around! Swish, swish, swish!',
           sparkles: ['🌀', '✨', '🧡'],
         },
         {
+          audioId: 'ex_tap_3',
           anim: 'anim-flash',
           sfx: 'beep_beep_high',
           fx: 'headlights',
           pop: '빵빵! Beep-beep!',
-          caption: 'Beep-beep! Ready to dig!',
-          speechEn: 'Beep-beep! Ready to dig!',
           sparkles: ['💡', '✨', '🌼'],
         },
         {
+          audioId: 'ex_tap_4',
           anim: 'anim-bounce',
           sfx: 'yay_bounce',
           fx: 'stars',
           pop: '야호! Go, excavator!',
-          caption: 'Yay! Go, excavator, go!',
-          speechEn: 'Yay! Go, excavator, go!',
           sparkles: ['⭐', '🌟', '🧡', '✨'],
+        },
+      ],
+      choices: [
+        {
+          emoji: '🏜️',
+          label: '모래 푸기',
+          audioId: 'ex_choice_sand',
+          anim: 'anim-scoop',
+          sfx: 'dig_scoop',
+          fx: 'sand_scoop',
+          pop: '푹푹! Golden sand!',
+          sparkles: ['🏜️', '✨', '🧡'],
+        },
+        {
+          emoji: '🦆',
+          label: '오리 찾기',
+          audioId: 'ex_choice_duck',
+          anim: 'anim-bounce',
+          sfx: 'duck_quack',
+          fx: 'stars',
+          pop: '꽥꽥! Little duck!',
+          sparkles: ['🦆', '💛', '✨'],
         },
       ],
     },
@@ -158,46 +226,64 @@
       title: '까꿍! 파란 덤프트럭이야!',
       soundWord: '덤프트럭 몸통을 톡톡 눌러 보세요!',
       pillClass: 'sound-word-pill--blue',
-      tapHint: '덤프트럭을 톡! 눌러 보세요',
+      tapHint: '덤프트럭 몸통을 톡! 눌러 보세요',
       popText: '까꿍! 덤프트럭!',
-      revealSpeechEn: 'Peek-a-boo! Blue dump truck!',
+      revealAudioId: 'dt_peekaboo',
       sparkles: ['💙', '☁️', '✨'],
       reactions: [
         {
+          audioId: 'dt_tap_1',
           anim: 'anim-dump',
           sfx: 'dump_whoosh',
           fx: 'pebble_dump',
           pop: '와르르! Tip & dump!',
-          caption: 'Tip and dump! Whoosh goes the sand!',
-          speechEn: 'Tip and dump! Whoosh goes the sand!',
           sparkles: ['💨', '💙', '✨'],
         },
         {
+          audioId: 'dt_tap_2',
           anim: 'anim-flash',
           sfx: 'truck_honk',
           fx: 'headlights',
           pop: '빵빵! Honk-honk!',
-          caption: 'Honk-honk! Big blue dump truck!',
-          speechEn: 'Honk-honk! Big blue dump truck!',
           sparkles: ['💡', '✨', '💙'],
         },
         {
+          audioId: 'dt_tap_3',
           anim: 'anim-push-right',
           sfx: 'engine_vroom',
           fx: 'smoke_dust',
           pop: '부릉부릉! Vroom-vroom!',
-          caption: 'Vroom-vroom! Carry the rocks!',
-          speechEn: 'Vroom-vroom! Carry the rocks!',
           sparkles: ['💨', '☁️', '💙'],
         },
         {
+          audioId: 'dt_tap_4',
           anim: 'anim-bounce',
           sfx: 'yay_bounce',
           fx: 'stars',
           pop: '야호! Go, dump truck!',
-          caption: 'Yay! Go, dump truck, go!',
-          speechEn: 'Yay! Go, dump truck, go!',
           sparkles: ['⭐', '🌟', '💙', '✨'],
+        },
+      ],
+      choices: [
+        {
+          emoji: '🪨',
+          label: '돌 싣기',
+          audioId: 'dt_choice_stones',
+          anim: 'anim-dump',
+          sfx: 'dump_whoosh',
+          fx: 'pebble_dump',
+          pop: '와르르! Heavy stones!',
+          sparkles: ['🪨', '💨', '💙'],
+        },
+        {
+          emoji: '🍎',
+          label: '사과 싣기',
+          audioId: 'dt_choice_apples',
+          anim: 'anim-push-right',
+          sfx: 'engine_vroom',
+          fx: 'stars',
+          pop: '씽씽! Sweet apples!',
+          sparkles: ['🍎', '✨', '💙'],
         },
       ],
     },
@@ -209,27 +295,44 @@
       filename: 'img_sleepy_garage.jpg',
       assetDesc: '노을 지는 저녁, 차고 안에서 졸린 눈으로 인사하는 중장비 마무리 일러스트',
       title: '잘 자, 중장비 친구들!',
-      soundWord: 'Goodnight, sleepy machines! 🌙',
+      soundWord: 'Goodnight, big machines! 🌙',
       pillClass: 'sound-word-pill--sleepy',
       tapHint: '하늘을 톡! 누르면 별이 반짝',
-      popText: '잘 자요~ 🌙',
-      speechEn: 'Goodnight, big machines! See you tomorrow!',
+      popText: '잘 자요~ Bye-bye! 🌙',
+      audioId: 'bd_bye',
       soundKind: 'lullaby',
       sparkles: ['🌙', '⭐', '✨'],
     },
   ];
 
+  // --- App & Hybrid Audio Engine State ---
+  const SPEED_STORAGE_KEY = 'peekaboo_voice_speed';
+  const AUDIO_BASE_PATH = 'audio/';
+
   let currentIndex = 0;
   let soundEnabled = true;
   let isPeekCovered = false;
+  let voiceSpeedMode = loadSavedSpeedMode(); // 'slow' | 'normal'
+
   let audioCtx = null;
   let activeSfxBus = null;
   let activeSfxNodes = [];
-  let speechTimer = null;
   let noiseBufferCache = null;
+
+  let activeAudioEl = null;
+  let speechTimer = null;
+  let voicePlayToken = 0;
   let preferredEnVoice = null;
+
+  // Preloaded Gemini audio elements & probe cache
+  const audioPool = Object.create(null); // audioId -> HTMLAudioElement
+  const probedMissing = new Set();       // audioIds confirmed not present on server
+  let manifestLoadedFiles = 0;
+  let manifestVoiceName = 'Puck';
+
   const reactionCursor = { bulldozer: 0, excavator: 0, dumptruck: 0 };
 
+  // DOM References
   const bookStage = document.getElementById('bookStage');
   const progressDots = document.getElementById('progressDots');
   const bottomNav = document.getElementById('bottomNav');
@@ -242,12 +345,107 @@
   const soundLabel = document.getElementById('soundLabel');
   const sparkleLayer = document.getElementById('sparkleLayer');
 
+  const parentMenuBtn = document.getElementById('parentMenuBtn');
+  const parentModal = document.getElementById('parentModal');
+  const closeParentModalBtn = document.getElementById('closeParentModalBtn');
+  const speedSlowBtn = document.getElementById('speedSlowBtn');
+  const speedNormalBtn = document.getElementById('speedNormalBtn');
+  const audioStatusBox = document.getElementById('audioStatusBox');
+
   const assetGalleryBtn = document.getElementById('assetGalleryBtn');
   const assetModal = document.getElementById('assetModal');
   const closeAssetModalBtn = document.getElementById('closeAssetModalBtn');
   const assetGrid = document.getElementById('assetGrid');
 
-  // --- Warm Native English Voice Selection ---
+  function loadSavedSpeedMode() {
+    try {
+      const saved = window.localStorage.getItem(SPEED_STORAGE_KEY);
+      if (saved === 'slow' || saved === 'normal') return saved;
+    } catch (_) {}
+    return 'normal';
+  }
+
+  function saveSpeedMode(mode) {
+    voiceSpeedMode = mode === 'slow' ? 'slow' : 'normal';
+    try {
+      window.localStorage.setItem(SPEED_STORAGE_KEY, voiceSpeedMode);
+    } catch (_) {}
+    syncParentSpeedUI();
+  }
+
+  function getAudioPlaybackRate() {
+    return voiceSpeedMode === 'slow' ? 0.85 : 1.0;
+  }
+
+  function getSpeechRate() {
+    return voiceSpeedMode === 'slow' ? 0.8 : 0.96;
+  }
+
+  // --- Hybrid Audio Manifest Loader (Priority 1: Pre-generated Gemini Audio) ---
+  function preloadAudioClip(audioId, filename) {
+    const url = `${AUDIO_BASE_PATH}${filename}`;
+    const el = new Audio();
+    el.preload = 'auto';
+    el.src = url;
+    el.load();
+    audioPool[audioId] = el;
+  }
+
+  async function initAudioManifest() {
+    try {
+      const res = await fetch(`${AUDIO_BASE_PATH}audio_manifest.json`, { cache: 'no-cache' });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.defaultVoice) {
+        manifestVoiceName = data.defaultVoice;
+      }
+      const files = (data && data.files) || {};
+      const entries = Object.entries(files);
+      manifestLoadedFiles = entries.length;
+      entries.forEach(([id, filename]) => {
+        if (typeof filename === 'string' && filename) {
+          preloadAudioClip(id, filename);
+        }
+      });
+    } catch (_) {
+      // Offline / file:// mode gracefully falls back to Web Speech API
+    } finally {
+      updateAudioStatusBox();
+    }
+  }
+
+  async function probeSingleAudioFile(audioId) {
+    if (audioPool[audioId]) return audioPool[audioId];
+    if (probedMissing.has(audioId)) return null;
+    if (window.location.protocol === 'file:') {
+      probedMissing.add(audioId);
+      return null;
+    }
+
+    for (const ext of ['.mp3', '.wav']) {
+      const url = `${AUDIO_BASE_PATH}${audioId}${ext}`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 140);
+      try {
+        const res = await fetch(url, { method: 'HEAD', signal: controller.signal });
+        clearTimeout(timeoutId);
+        const contentType = (res.headers.get('content-type') || '').toLowerCase();
+        if (res.ok && (contentType.startsWith('audio/') || contentType.includes('octet-stream'))) {
+          preloadAudioClip(audioId, `${audioId}${ext}`);
+          manifestLoadedFiles = Object.keys(audioPool).length;
+          updateAudioStatusBox();
+          return audioPool[audioId];
+        }
+      } catch (_) {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    probedMissing.add(audioId);
+    return null;
+  }
+
+  // --- Warm Native English Voice Selection (Priority 2: Web Speech Fallback) ---
   function loadVoices() {
     if (!('speechSynthesis' in window)) return;
     const voices = window.speechSynthesis.getVoices();
@@ -269,7 +467,100 @@
     window.speechSynthesis.onvoiceschanged = loadVoices;
   }
 
-  // --- Instant Zero-Overlap Web Audio Engine ---
+  // --- Rapid-Tap-Safe Voice Stopper ---
+  function stopActiveVoice() {
+    voicePlayToken += 1;
+    if (speechTimer) {
+      clearTimeout(speechTimer);
+      speechTimer = null;
+    }
+    if (activeAudioEl) {
+      try {
+        activeAudioEl.pause();
+        activeAudioEl.currentTime = 0;
+      } catch (_) {}
+      activeAudioEl = null;
+    }
+    if ('speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch (_) {}
+    }
+  }
+
+  function speakWebSpeechFallback(text, token) {
+    if (!soundEnabled || !text || token !== voicePlayToken) return;
+    if (!('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'en-US';
+      if (preferredEnVoice) u.voice = preferredEnVoice;
+      u.rate = getSpeechRate();
+      u.pitch = 1.12;
+      u.volume = 0.96;
+      window.speechSynthesis.speak(u);
+    } catch (_) {}
+  }
+
+  function playAudioElement(el, fallbackText, token) {
+    if (!soundEnabled || token !== voicePlayToken) return;
+    try {
+      el.pause();
+      el.currentTime = 0;
+      el.playbackRate = getAudioPlaybackRate();
+      el.volume = 1.0;
+      activeAudioEl = el;
+      const playPromise = el.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {
+          if (token === voicePlayToken) {
+            activeAudioEl = null;
+            speakWebSpeechFallback(fallbackText, token);
+          }
+        });
+      }
+    } catch (_) {
+      activeAudioEl = null;
+      speakWebSpeechFallback(fallbackText, token);
+    }
+  }
+
+  /**
+   * Hybrid Voice Playback:
+   *  1) Priority 1: Pre-generated Gemini audio in deploy/audio/ (<id>.mp3 or .wav) with playbackRate
+   *  2) Priority 2: Automatic error-free fallback to browser Web Speech API (en-US)
+   */
+  function playVoiceLine(audioId, delayMs = 95) {
+    stopActiveVoice();
+    if (!soundEnabled || !audioId) return;
+    const fallbackText = AUDIO_MANIFEST[audioId] || '';
+    const token = voicePlayToken;
+
+    speechTimer = setTimeout(async () => {
+      speechTimer = null;
+      if (!soundEnabled || token !== voicePlayToken) return;
+
+      // Priority 1 (instant <0.01s if preloaded from audio_manifest.json)
+      if (audioPool[audioId]) {
+        playAudioElement(audioPool[audioId], fallbackText, token);
+        return;
+      }
+
+      // One-time lightweight probe in case user manually dropped a file in deploy/audio/
+      const probedEl = await probeSingleAudioFile(audioId);
+      if (token !== voicePlayToken || !soundEnabled) return;
+
+      if (probedEl) {
+        playAudioElement(probedEl, fallbackText, token);
+      } else {
+        // Priority 2: Smooth en-US Web Speech API fallback
+        speakWebSpeechFallback(fallbackText, token);
+      }
+    }, delayMs);
+  }
+
+  // --- Instant Zero-Overlap Web Audio SFX Engine (<0.01s response) ---
   function ensureAudio() {
     if (!soundEnabled) return null;
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -293,7 +584,6 @@
     let lastOut = 0;
     for (let i = 0; i < len; i++) {
       const white = Math.random() * 2 - 1;
-      // Soft pink/brownish noise for cozy toddler-safe dirt & whoosh FX
       data[i] = (lastOut + 0.06 * white) / 1.06;
       lastOut = data[i];
       data[i] *= 3.2;
@@ -383,7 +673,6 @@
 
     switch (kind) {
       case 'engine_rumble': {
-        // Warm chugging bulldozer engine purr (low-pass filtered sawtooth + LFO pulse)
         const now = ctx.currentTime;
         const osc = ctx.createOscillator();
         const sub = ctx.createOscillator();
@@ -408,7 +697,7 @@
         filter.frequency.setValueAtTime(240, now);
 
         gain.gain.setValueAtTime(0.001, now);
-        gain.gain.exponentialRampToValueAtTime(0.24, now + 0.035);
+        gain.gain.exponentialRampToValueAtTime(0.24, now + 0.03);
         gain.gain.setValueAtTime(0.22, now + 0.34);
         gain.gain.exponentialRampToValueAtTime(0.0008, now + 0.56);
 
@@ -427,7 +716,6 @@
       }
 
       case 'beep_beep':
-        // Friendly crisp double horn ("Beep-beep!")
         addTone(ctx, bus, 523.25, 0.0, 0.14, 'triangle', 0.22);
         addTone(ctx, bus, 659.25, 0.0, 0.14, 'sine', 0.12);
         addTone(ctx, bus, 523.25, 0.18, 0.18, 'triangle', 0.24);
@@ -442,7 +730,6 @@
         break;
 
       case 'truck_honk':
-        // Warm, dependable lower double horn ("Honk-honk!")
         addTone(ctx, bus, 261.63, 0.0, 0.16, 'triangle', 0.24);
         addTone(ctx, bus, 392.0, 0.0, 0.16, 'triangle', 0.16);
         addTone(ctx, bus, 261.63, 0.21, 0.22, 'triangle', 0.26);
@@ -450,15 +737,25 @@
         break;
 
       case 'push_strong':
-        // Sandy shove whoosh + rising sturdy push cadence
         addFilteredNoise(ctx, bus, 0.0, 0.44, 240, 720, 0.2);
         addTone(ctx, bus, 140, 0.0, 0.22, 'triangle', 0.2, 230);
         addTone(ctx, bus, 261.63, 0.14, 0.16, 'triangle', 0.15, 329.63);
         addTone(ctx, bus, 392.0, 0.28, 0.22, 'sine', 0.16);
         break;
 
+      case 'jelly_boing':
+        addTone(ctx, bus, 210, 0.0, 0.24, 'sine', 0.22, 620);
+        addTone(ctx, bus, 560, 0.18, 0.24, 'sine', 0.18, 280);
+        addTone(ctx, bus, 340, 0.34, 0.18, 'sine', 0.15, 520);
+        break;
+
+      case 'duck_quack':
+        addTone(ctx, bus, 620, 0.0, 0.13, 'sawtooth', 0.11, 390);
+        addTone(ctx, bus, 640, 0.16, 0.15, 'sawtooth', 0.11, 410);
+        addTone(ctx, bus, 783.99, 0.32, 0.18, 'sine', 0.15);
+        break;
+
       case 'yay_bounce':
-        // Upbeat joyful xylophone/marimba bounce!
         addTone(ctx, bus, 523.25, 0.0, 0.13, 'sine', 0.18);
         addTone(ctx, bus, 659.25, 0.08, 0.13, 'sine', 0.18);
         addTone(ctx, bus, 783.99, 0.16, 0.15, 'sine', 0.19);
@@ -466,21 +763,18 @@
         break;
 
       case 'dig_scoop':
-        // Playful scoop down then lift up + sand rustle
         addTone(ctx, bus, 340, 0.0, 0.18, 'triangle', 0.16, 210);
         addFilteredNoise(ctx, bus, 0.1, 0.34, 420, 960, 0.18);
         addTone(ctx, bus, 260, 0.18, 0.24, 'sine', 0.18, 520);
         break;
 
       case 'swivel_whir':
-        // Cute smooth hydraulic swivel whoosh
         addTone(ctx, bus, 300, 0.0, 0.18, 'sine', 0.16, 520);
         addTone(ctx, bus, 520, 0.18, 0.18, 'sine', 0.16, 330);
         addTone(ctx, bus, 440, 0.34, 0.16, 'sine', 0.14, 587.33);
         break;
 
       case 'dump_whoosh':
-        // Hydraulic tip + gentle tumbling pebbles
         addTone(ctx, bus, 220, 0.0, 0.22, 'triangle', 0.16, 360);
         addFilteredNoise(ctx, bus, 0.14, 0.36, 750, 240, 0.18);
         addTone(ctx, bus, 660, 0.18, 0.09, 'sine', 0.13);
@@ -490,7 +784,6 @@
         break;
 
       case 'engine_vroom':
-        // Smooth rolling engine rev
         addTone(ctx, bus, 95, 0.0, 0.22, 'sawtooth', 0.11, 165);
         addTone(ctx, bus, 165, 0.2, 0.26, 'triangle', 0.18, 240);
         addFilteredNoise(ctx, bus, 0.05, 0.38, 220, 480, 0.12);
@@ -521,36 +814,6 @@
         addTone(ctx, bus, 659.25, 0.18, 0.26, 'sine', 0.16);
         break;
     }
-  }
-
-  // --- Rapid-Tap-Safe Native English & Korean Speech ---
-  function cancelPendingSpeech() {
-    if (speechTimer) {
-      clearTimeout(speechTimer);
-      speechTimer = null;
-    }
-    if ('speechSynthesis' in window) {
-      try { window.speechSynthesis.cancel(); } catch (_) {}
-    }
-  }
-
-  function speakEnglish(text, delayMs = 115) {
-    cancelPendingSpeech();
-    if (!soundEnabled || !text || !('speechSynthesis' in window)) return;
-    speechTimer = setTimeout(() => {
-      speechTimer = null;
-      if (!soundEnabled) return;
-      try {
-        window.speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        u.lang = 'en-US';
-        if (preferredEnVoice) u.voice = preferredEnVoice;
-        u.rate = 0.94;
-        u.pitch = 1.12;
-        u.volume = 0.95;
-        window.speechSynthesis.speak(u);
-      } catch (_) {}
-    }, delayMs);
   }
 
   // --- Instant Visual FX Helpers ---
@@ -640,7 +903,6 @@
       spawnSparkles(cx, cy, sparkles, 6);
       return;
     }
-    // Default 'stars' celebration
     spawnSparkles(cx, cy, sparkles, 10);
   }
 
@@ -674,7 +936,7 @@
     });
   }
 
-  function updateReactionDots(sceneId, activeStep) {
+  function updateReactionDots(activeStep) {
     const container = document.getElementById('reactionDots');
     if (!container) return;
     const dots = container.querySelectorAll('.reaction-dot');
@@ -748,6 +1010,7 @@
 
     const isHero = scene.type === 'hero';
     const reactionCount = isHero && scene.reactions ? scene.reactions.length : 0;
+    const choices = isHero && scene.choices ? scene.choices : [];
 
     bookStage.innerHTML = `
       <section class="story-card">
@@ -788,6 +1051,22 @@
                 </div>`
               : ''
           }
+          ${
+            choices.length > 0
+              ? `<div class="choice-row" id="choiceRow" ${isPeekCovered ? 'hidden' : ''}>
+                  ${choices
+                    .map(
+                      (ch, i) => `
+                        <button class="choice-btn ${i === 1 ? 'choice-btn--alt' : ''}" type="button" data-choice-idx="${i}">
+                          <span class="choice-emoji" aria-hidden="true">${ch.emoji}</span>
+                          <span>${ch.label}</span>
+                        </button>
+                      `
+                    )
+                    .join('')}
+                </div>`
+              : ''
+          }
         </div>
       </section>
     `;
@@ -801,30 +1080,36 @@
     const soundWordText = document.getElementById('soundWordText');
     const fxLayer = document.getElementById('fxLayer');
     const fxHeadlights = document.getElementById('fxHeadlights');
+    const choiceRow = document.getElementById('choiceRow');
+
+    const fireReactionObj = (rx, cx, cy, stepIdx = null) => {
+      // 1) Instant (<0.01s) Web Audio SFX + juicy animation + visual FX
+      playSoundEffect(rx.sfx);
+      triggerAnimation(pictureFrame, rx.anim);
+      spawnTouchRipple(pictureFrame, cx, cy);
+      triggerVisualFx(pictureFrame, fxLayer, fxHeadlights, rx.fx, cx, cy, rx.sparkles);
+      showPopBanner(peekabooPop, rx.pop);
+      soundWordText.textContent = AUDIO_MANIFEST[rx.audioId] || rx.pop;
+      if (stepIdx !== null) {
+        updateReactionDots(stepIdx);
+      }
+
+      // 2) Hybrid Voice Engine (Gemini audio priority 1 -> Web Speech en-US fallback)
+      playVoiceLine(rx.audioId, 90);
+    };
 
     const fireHeroReaction = (cx, cy) => {
       const reactions = scene.reactions;
       if (!reactions || !reactions.length) return;
       const stepIdx = reactionCursor[scene.id] % reactions.length;
       reactionCursor[scene.id] = (stepIdx + 1) % reactions.length;
-      const rx = reactions[stepIdx];
-
-      // 1) Instant (<10ms) Web Audio SFX + squash/action animation + visual FX
-      playSoundEffect(rx.sfx);
-      triggerAnimation(pictureFrame, rx.anim);
-      spawnTouchRipple(pictureFrame, cx, cy);
-      triggerVisualFx(pictureFrame, fxLayer, fxHeadlights, rx.fx, cx, cy, rx.sparkles);
-      showPopBanner(peekabooPop, rx.pop);
-      soundWordText.textContent = rx.caption;
-      updateReactionDots(scene.id, stepIdx);
-
-      // 2) Crisp native English sentence immediately following SFX burst (cancelling any previous)
-      speakEnglish(rx.speechEn, 110);
+      fireReactionObj(reactions[stepIdx], cx, cy, stepIdx);
     };
 
     const revealFromCurtain = (cx, cy) => {
       isPeekCovered = false;
       if (peekCurtain) peekCurtain.classList.add('is-open');
+      if (choiceRow) choiceRow.hidden = false;
       sceneTitle.textContent = scene.title;
       soundWordText.textContent = scene.soundWord;
       tapHintBadge.textContent = scene.tapHint;
@@ -832,7 +1117,7 @@
       showPopBanner(peekabooPop, scene.popText);
       spawnSparkles(cx, cy, scene.sparkles, 8);
       triggerAnimation(pictureFrame, 'anim-bounce');
-      speakEnglish(scene.revealSpeechEn, 140);
+      playVoiceLine(scene.revealAudioId, 110);
       updateChrome();
     };
 
@@ -840,7 +1125,6 @@
 
     const handleDirectTap = (e) => {
       const now = performance.now();
-      // Guard against duplicate synthetic events within 45ms while allowing super-fast toddler tapping
       if (now - lastDirectTapTs < 45) return;
       lastDirectTapTs = now;
 
@@ -854,12 +1138,12 @@
         spawnTouchRipple(pictureFrame, cx, cy);
         showPopBanner(peekabooPop, '똑똑똑! Knock, knock!');
         spawnSparkles(cx, cy, ['🚪', '✨', '💛'], 6);
-        speakEnglish('Knock, knock! Peek-a-boo!', 90);
+        playVoiceLine(scene.openAudioId, 80);
         setTimeout(() => {
           if (currentIndex === 1) {
             goToScene(2, false, true);
           }
-        }, 620);
+        }, 640);
         return;
       }
 
@@ -879,10 +1163,10 @@
       spawnTouchRipple(pictureFrame, cx, cy);
       showPopBanner(peekabooPop, scene.popText);
       spawnSparkles(cx, cy, scene.sparkles, 8);
-      speakEnglish(scene.speechEn, 130);
+      playVoiceLine(scene.audioId, 110);
     };
 
-    // Instant pointerdown fires immediately on touch contact (0.01s latency!)
+    // Instant pointerdown fires immediately on touch contact (<0.01s latency)
     pictureFrame.addEventListener('pointerdown', (e) => {
       if (e.button && e.button !== 0) return;
       handleDirectTap(e);
@@ -910,6 +1194,20 @@
       }
     });
 
+    if (choiceRow) {
+      choiceRow.querySelectorAll('.choice-btn').forEach((btn) => {
+        btn.addEventListener('pointerdown', (e) => {
+          if (e.button && e.button !== 0) return;
+          e.preventDefault();
+          const idx = Number(btn.dataset.choiceIdx);
+          const ch = choices[idx];
+          if (!ch) return;
+          const rect = pictureFrame.getBoundingClientRect();
+          fireReactionObj(ch, rect.left + rect.width / 2, rect.top + rect.height / 2, null);
+        });
+      });
+    }
+
     if (scene.type === 'sleepy') {
       playSoundEffect('lullaby');
     }
@@ -917,7 +1215,7 @@
 
   function goToScene(index, startCovered = false, celebrateOnArrival = false) {
     if (index < 0 || index >= SCENES.length) return;
-    cancelPendingSpeech();
+    stopActiveVoice();
     stopActiveSfx();
     currentIndex = index;
     renderScene(startCovered);
@@ -930,11 +1228,11 @@
       showPopBanner(popEl, scene.popText);
       if (frame) triggerAnimation(frame, 'anim-bounce');
       spawnSparkles(window.innerWidth / 2, window.innerHeight * 0.42, scene.sparkles, 8);
-      speakEnglish(scene.revealSpeechEn, 140);
+      playVoiceLine(scene.revealAudioId, 120);
     } else if (!startCovered && scene.type === 'sleepy') {
-      speakEnglish(scene.speechEn, 200);
+      playVoiceLine(scene.audioId, 180);
     } else if (!startCovered && scene.type === 'door') {
-      speakEnglish(scene.speechEn, 140);
+      playVoiceLine(scene.audioId, 130);
     }
   }
 
@@ -966,6 +1264,7 @@
     const scene = SCENES[currentIndex];
     if (scene.type !== 'hero') return;
     const peekCurtain = document.getElementById('peekCurtain');
+    const choiceRow = document.getElementById('choiceRow');
     const sceneTitle = document.getElementById('sceneTitle');
     const soundWordText = document.getElementById('soundWordText');
     const tapHintBadge = document.getElementById('tapHintBadge');
@@ -976,12 +1275,15 @@
     if (peekCurtain) {
       peekCurtain.classList.toggle('is-open', !isPeekCovered);
     }
+    if (choiceRow) {
+      choiceRow.hidden = isPeekCovered;
+    }
     if (isPeekCovered) {
       playSoundEffect('knock');
       sceneTitle.textContent = '똑똑똑! 이번엔 누가 숨었을까?';
       soundWordText.textContent = '나무 문을 톡 눌러 열어 보세요!';
       tapHintBadge.textContent = '똑똑똑! 문을 톡 눌러 까꿍!';
-      speakEnglish('Where did it go? Tap the door!', 110);
+      playVoiceLine('peek_hide', 100);
     } else {
       playSoundEffect('peekaboo');
       sceneTitle.textContent = scene.title;
@@ -990,7 +1292,7 @@
       showPopBanner(peekabooPop, scene.popText);
       if (frame) triggerAnimation(frame, 'anim-bounce');
       spawnSparkles(window.innerWidth / 2, window.innerHeight * 0.42, scene.sparkles, 8);
-      speakEnglish(scene.revealSpeechEn, 130);
+      playVoiceLine(scene.revealAudioId, 110);
     }
     updateChrome();
   });
@@ -1001,14 +1303,67 @@
     soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
     soundLabel.textContent = soundEnabled ? '소리 켜짐' : '소리 꺼짐';
     if (!soundEnabled) {
-      cancelPendingSpeech();
+      stopActiveVoice();
       stopActiveSfx();
     } else {
       playSoundEffect('chime');
     }
   });
 
-  // Asset Gallery Modal
+  // --- Parent Menu (Speed Toggle & Audio Engine Status) ---
+  function syncParentSpeedUI() {
+    const isSlow = voiceSpeedMode === 'slow';
+    speedSlowBtn.classList.toggle('is-selected', isSlow);
+    speedSlowBtn.setAttribute('aria-checked', String(isSlow));
+    speedNormalBtn.classList.toggle('is-selected', !isSlow);
+    speedNormalBtn.setAttribute('aria-checked', String(!isSlow));
+  }
+
+  function updateAudioStatusBox() {
+    if (!audioStatusBox) return;
+    const totalLines = Object.keys(AUDIO_MANIFEST).length;
+    const readyCount = manifestLoadedFiles;
+    const modeLabel =
+      readyCount > 0
+        ? `Gemini 음성 활성 (${readyCount}/${totalLines}개)`
+        : `Web Speech API (en-US) 자동 폴백 중`;
+    audioStatusBox.innerHTML = `
+      <div class="audio-status-badge">${modeLabel}</div>
+      <div>
+        1순위: <code>deploy/audio/</code> 사전 생성 Gemini 목소리 (${manifestVoiceName}, 유지비 0원)<br />
+        2순위: 미생성 대사는 브라우저 영어 원어민 음성으로 즉시 자동 재생<br />
+        현재 속도: <strong>${voiceSpeedMode === 'slow' ? '천천히 (0.85×)' : '보통 (1.0×)'}</strong>
+      </div>
+    `;
+  }
+
+  parentMenuBtn.addEventListener('click', () => {
+    syncParentSpeedUI();
+    updateAudioStatusBox();
+    parentModal.hidden = false;
+  });
+
+  closeParentModalBtn.addEventListener('click', () => {
+    parentModal.hidden = true;
+  });
+
+  parentModal.addEventListener('click', (e) => {
+    if (e.target === parentModal) parentModal.hidden = true;
+  });
+
+  speedSlowBtn.addEventListener('click', () => {
+    saveSpeedMode('slow');
+    updateAudioStatusBox();
+    playVoiceLine('bd_tap_1', 30);
+  });
+
+  speedNormalBtn.addEventListener('click', () => {
+    saveSpeedMode('normal');
+    updateAudioStatusBox();
+    playVoiceLine('bd_tap_1', 30);
+  });
+
+  // --- Asset Gallery Modal ---
   function populateAssetGallery() {
     assetGrid.innerHTML = '';
     SCENES.forEach((scene, idx) => {
@@ -1045,6 +1400,10 @@
   });
 
   document.addEventListener('keydown', (e) => {
+    if (!parentModal.hidden && e.key === 'Escape') {
+      parentModal.hidden = true;
+      return;
+    }
     if (!assetModal.hidden && e.key === 'Escape') {
       assetModal.hidden = true;
       return;
@@ -1053,6 +1412,8 @@
     if (e.key === 'ArrowLeft') prevBtn.click();
   });
 
-  // Initial render
+  // Boot
+  syncParentSpeedUI();
+  initAudioManifest();
   renderScene(false);
 })();

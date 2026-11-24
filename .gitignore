@@ -5,3 +5,7 @@ venv/
 __pycache__/
 *.log
 .vite/
+.env
+.env.*
+!.env.example
+*.key

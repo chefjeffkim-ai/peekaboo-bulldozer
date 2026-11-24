@@ -1,0 +1,33 @@
+{
+  "engine": "gemini-2.5-flash-preview-tts",
+  "defaultVoice": "Puck",
+  "files": {},
+  "lines": {
+    "cover_welcome": "Peek-a-boo! Heavy machines! Let's play!",
+    "door_knock": "Knock, knock! Who is inside?",
+    "door_open": "Knock, knock! Peek-a-boo!",
+    "bd_peekaboo": "Peek-a-boo! Big yellow bulldozer!",
+    "bd_tap_1": "Rumble-rumble! Big yellow bulldozer!",
+    "bd_tap_2": "Beep-beep! Watch out!",
+    "bd_tap_3": "Push, push, push! So strong!",
+    "bd_tap_4": "Yay! Go, bulldozer, go!",
+    "bd_choice_rock": "Push the big rock! Crunch, push, push!",
+    "bd_choice_jelly": "Push the bouncy jelly! Boing, wiggle, giggle!",
+    "ex_peekaboo": "Peek-a-boo! Cute orange excavator!",
+    "ex_tap_1": "Dig, dig, scoop! Big orange excavator!",
+    "ex_tap_2": "Turn around! Swish, swish, swish!",
+    "ex_tap_3": "Beep-beep! Ready to dig!",
+    "ex_tap_4": "Yay! Go, excavator, go!",
+    "ex_choice_sand": "Scoop the golden sand! Dig, dig, hooray!",
+    "ex_choice_duck": "Surprise! A little yellow duck! Quack, quack!",
+    "dt_peekaboo": "Peek-a-boo! Strong blue dump truck!",
+    "dt_tap_1": "Tip and dump! Whoosh goes the sand!",
+    "dt_tap_2": "Honk-honk! Big blue dump truck!",
+    "dt_tap_3": "Vroom-vroom! Carry the rocks!",
+    "dt_tap_4": "Yay! Go, dump truck, go!",
+    "dt_choice_stones": "Load the heavy stones! Clunk, clunk, dump!",
+    "dt_choice_apples": "Carry the sweet red apples! Yummy, zoom, zoom!",
+    "peek_hide": "Where did it go? Tap the wooden door!",
+    "bd_bye": "Goodnight, big machines! Bye-bye! See you tomorrow!"
+  }
+}

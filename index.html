@@ -14,10 +14,16 @@
   <div class="app-shell" id="appShell">
     <!-- Top minimal bar (calm, unobtrusive for toddlers) -->
     <header class="top-bar">
-      <button class="pill-btn pill-btn--soft" id="assetGalleryBtn" type="button" aria-label="일러스트 에셋 보기">
-        <span class="pill-icon" aria-hidden="true">🎨</span>
-        <span class="pill-label">에셋 6종</span>
-      </button>
+      <div class="top-bar-group">
+        <button class="pill-btn pill-btn--soft" id="parentMenuBtn" type="button" aria-label="부모 설정 열기">
+          <span class="pill-icon" aria-hidden="true">⚙️</span>
+          <span class="pill-label">부모 메뉴</span>
+        </button>
+        <button class="pill-btn pill-btn--soft" id="assetGalleryBtn" type="button" aria-label="일러스트 에셋 보기">
+          <span class="pill-icon" aria-hidden="true">🎨</span>
+          <span class="pill-label">에셋 6종</span>
+        </button>
+      </div>
 
       <div class="progress-dots" id="progressDots" role="tablist" aria-label="동화책 페이지"></div>
 
@@ -28,9 +34,7 @@
     </header>
 
     <!-- Main Picture Book Stage -->
-    <main class="book-stage" id="bookStage" aria-live="polite">
-      <!-- Scene content rendered dynamically by app.js -->
-    </main>
+    <main class="book-stage" id="bookStage" aria-live="polite"></main>
 
     <!-- Bottom Giant Toddler-Friendly Navigation -->
     <footer class="bottom-nav" id="bottomNav">
@@ -54,7 +58,41 @@
     <div class="sparkle-layer" id="sparkleLayer" aria-hidden="true"></div>
   </div>
 
-  <!-- Asset Gallery Modal (for parents / developers / Google AI Studio review) -->
+  <!-- Parent Settings Modal (Slow/Normal Voice Speed + Gemini Audio Engine Status) -->
+  <div class="modal-backdrop" id="parentModal" hidden>
+    <div class="modal-card modal-card--compact" role="dialog" aria-modal="true" aria-labelledby="parentModalTitle">
+      <div class="modal-header">
+        <div>
+          <h2 id="parentModalTitle">부모님 설정 (오디오 &amp; 속도)</h2>
+          <p class="modal-subtitle">제미나이(Gemini) 음성 파일 우선 재생 · 미생성 시 원어민 TTS 자동 폴백</p>
+        </div>
+        <button class="modal-close-btn" id="closeParentModalBtn" type="button" aria-label="닫기">✕</button>
+      </div>
+
+      <div class="parent-section">
+        <div class="parent-section-label">영어 음성 속도 (playbackRate)</div>
+        <div class="speed-toggle-group" role="radiogroup" aria-label="음성 재생 속도">
+          <button class="speed-btn" id="speedSlowBtn" type="button" data-speed="slow" role="radio" aria-checked="false">
+            <span class="speed-emoji" aria-hidden="true">🐢</span>
+            <span>천천히 (Slow · 0.85×)</span>
+          </button>
+          <button class="speed-btn" id="speedNormalBtn" type="button" data-speed="normal" role="radio" aria-checked="true">
+            <span class="speed-emoji" aria-hidden="true">🐇</span>
+            <span>보통 (Normal · 1.0×)</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="parent-section">
+        <div class="parent-section-label">하이브리드 오디오 엔진 상태</div>
+        <div class="audio-status-box" id="audioStatusBox">
+          확인 중...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Asset Gallery Modal -->
   <div class="modal-backdrop" id="assetModal" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="assetModalTitle">
       <div class="modal-header">

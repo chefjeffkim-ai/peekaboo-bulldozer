@@ -74,8 +74,14 @@ body.theme-sleepy {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   z-index: 5;
+}
+
+.top-bar-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .pill-btn {
@@ -304,7 +310,7 @@ body.theme-sleepy {
 }
 
 .picture-frame:active {
-  transform: scale(0.988);
+  transform: scale(0.95);
 }
 
 .picture-img {
@@ -547,6 +553,145 @@ body.theme-sleepy {
 
 .reaction-dots[data-accent="blue"] .reaction-dot.is-current {
   background: var(--pastel-blue-deep);
+}
+
+/* 2-Choice Play Bar (Toddler Mini Choice Buttons) */
+.choice-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.choice-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 54px;
+  padding: 10px 16px;
+  border-radius: 22px;
+  border: 2.5px solid var(--border-warm);
+  background: var(--bg-warm-card);
+  color: var(--ink-cocoa);
+  font-family: inherit;
+  font-size: clamp(1rem, 2.8vw, 1.18rem);
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 5px 14px rgba(138, 110, 76, 0.09);
+  transition: transform 0.09s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.choice-btn:hover {
+  background: #FFF4DC;
+  transform: translateY(-1px);
+}
+
+.choice-btn:active {
+  transform: scale(0.95);
+}
+
+.choice-btn--alt {
+  background: #FDF5F0;
+}
+
+.choice-btn--alt:hover {
+  background: #FCEAE1;
+}
+
+.choice-emoji {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+/* Jelly Boing animation */
+.picture-frame.anim-jelly .picture-img {
+  animation: jellyBoing 0.72s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes jellyBoing {
+  0%   { transform: scale(1, 1); }
+  18%  { transform: scale(1.13, 0.86) rotate(-2deg); }
+  38%  { transform: scale(0.89, 1.12) rotate(2.5deg); }
+  58%  { transform: scale(1.07, 0.93) rotate(-1.5deg); }
+  78%  { transform: scale(0.96, 1.04) rotate(0.8deg); }
+  100% { transform: scale(1, 1) rotate(0deg); }
+}
+
+/* Parent Modal Styles */
+.modal-card--compact {
+  max-width: 560px;
+}
+
+.parent-section {
+  margin-top: 18px;
+}
+
+.parent-section-label {
+  font-size: 1.05rem;
+  color: var(--ink-cocoa);
+  margin-bottom: 10px;
+}
+
+.speed-toggle-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.speed-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 12px;
+  border-radius: 20px;
+  border: 2.5px solid var(--border-warm);
+  background: #FFFDF7;
+  color: var(--ink-cocoa);
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.12s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.speed-btn:active {
+  transform: scale(0.95);
+}
+
+.speed-btn.is-selected {
+  background: var(--pastel-yellow);
+  border-color: var(--pastel-yellow-deep);
+  box-shadow: 0 6px 16px rgba(235, 201, 104, 0.28);
+}
+
+.speed-emoji {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.audio-status-box {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: var(--bg-warm-card);
+  border: 2px solid var(--border-warm);
+  font-family: 'Nunito', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 0.94rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.audio-status-badge {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--pastel-sage);
+  color: var(--ink-cocoa);
+  font-weight: 800;
+  font-size: 0.85rem;
 }
 
 /* Peek-a-boo Curtain Overlay */
