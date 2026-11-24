@@ -369,7 +369,10 @@
     { start: 131.9, end: 999.0, type: 'finale',  title: '🎉 A to Z! Yay! 참 잘했어요!', sub: 'Learning letters is a ball!' },
   ];
 
-  let appMode = 'machines'; // 'machines' (includes cover at index 0) | 'az' | 'song'
+  const YOUTUBE_ABC_EMBED_URL = 'https://www.youtube.com/embed/8l1AVNyCSS8?rel=0&playsinline=1&modestbranding=1';
+  const YOUTUBE_ABC_WATCH_URL = 'https://www.youtube.com/watch?v=8l1AVNyCSS8';
+
+  let appMode = 'machines'; // 'machines' (includes cover at index 0) | 'az' | 'song' | 'video'
   let currentIndex = 0;
   let azIndex = 0;
   let azGridOpen = false;
@@ -1153,7 +1156,7 @@
   }
 
   function updateChrome() {
-    if (appMode === 'az' || appMode === 'song') {
+    if (appMode === 'az' || appMode === 'song' || appMode === 'video') {
       document.body.classList.remove('theme-sleepy');
       if (homeBtn) homeBtn.hidden = false;
       progressDots.style.visibility = 'hidden';
@@ -1210,6 +1213,72 @@
     renderSongMode(autoPlay);
   }
 
+  function openVideoMode() {
+    // Immediately stop any in-app audio/voice/SFX so YouTube audio never collides
+    stopAbcSong(true);
+    stopActiveVoice();
+    stopActiveSfx();
+    appMode = 'video';
+    renderVideoMode();
+  }
+
+  function renderVideoMode() {
+    updateChrome();
+    bookStage.innerHTML = `
+      <section class="video-shell">
+        <div class="az-header-row">
+          <div class="az-mode-badge">🎬 알파벳 노래 영상 보기 (ABC Song)</div>
+          <div class="az-header-actions">
+            <button class="az-song-pill" id="videoToSongBtn" type="button">🎵 노래 카드</button>
+            <button class="az-view-toggle" id="videoToAzBtn" type="button">🔤 A~Z 단어 놀이</button>
+          </div>
+        </div>
+
+        <div class="yt-frame-wrap">
+          <iframe
+            src="${YOUTUBE_ABC_EMBED_URL}"
+            title="알파벳 노래 영상 보기 (ABC Song)"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+          ></iframe>
+        </div>
+
+        <div class="yt-action-row">
+          <a
+            class="yt-action-btn yt-action-btn--like"
+            href="${YOUTUBE_ABC_WATCH_URL}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span aria-hidden="true">👍</span>
+            <span>영상 좋아요 누르기</span>
+          </a>
+          <a
+            class="yt-action-btn yt-action-btn--subscribe"
+            href="${YOUTUBE_ABC_WATCH_URL}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span aria-hidden="true">🔔</span>
+            <span>Jeffrey Kim 채널 구독하기</span>
+          </a>
+        </div>
+
+        <p class="yt-parent-note">엄마·아빠가 함께 눌러주시면 다음 동화책과 노래 제작에 큰 힘이 됩니다 💛</p>
+      </section>
+    `;
+
+    document.getElementById('videoToSongBtn').addEventListener('click', () => {
+      openSongMode(true);
+    });
+
+    document.getElementById('videoToAzBtn').addEventListener('click', () => {
+      playSoundEffect('chime');
+      openAzMode(0);
+    });
+  }
+
   function goHome() {
     stopAbcSong(true);
     stopActiveVoice();
@@ -1264,6 +1333,7 @@
         <div class="az-header-row">
           <div class="az-mode-badge">🎵 알파벳 노래 (ABC Song)</div>
           <div class="az-header-actions">
+            <button class="az-video-pill" id="songToVideoBtn" type="button">🎬 영상 보기</button>
             <button class="az-view-toggle" id="songToAzBtn" type="button">🔤 A~Z 카드 놀이</button>
           </div>
         </div>
@@ -1310,6 +1380,10 @@
     const restartBtn = document.getElementById('songRestartBtn');
     const songGrid = document.getElementById('songAzGrid');
     const cardEls = Array.from(songGrid.querySelectorAll('.song-card-item'));
+
+    document.getElementById('songToVideoBtn').addEventListener('click', () => {
+      openVideoMode();
+    });
 
     document.getElementById('songToAzBtn').addEventListener('click', () => {
       playSoundEffect('chime');
@@ -1511,7 +1585,8 @@
         <div class="az-header-row">
           <div class="az-mode-badge">🔤 A~Z 알파벳 그림 단어 놀이터 (${azIndex + 1}/26)</div>
           <div class="az-header-actions">
-            <button class="az-song-pill" id="azToSongBtn" type="button">🎵 알파벳 노래</button>
+            <button class="az-video-pill" id="azToVideoBtn" type="button">🎬 알파벳 노래 영상 보기</button>
+            <button class="az-song-pill" id="azToSongBtn" type="button">🎵 노래 카드</button>
             <button class="az-view-toggle" id="azViewToggleBtn" type="button">
               ${azGridOpen ? '🔍 크게 보기' : '🗂️ 전체 A~Z 보기'}
             </button>
@@ -1575,6 +1650,10 @@
     if (activeChip && typeof activeChip.scrollIntoView === 'function') {
       activeChip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     }
+
+    document.getElementById('azToVideoBtn').addEventListener('click', () => {
+      openVideoMode();
+    });
 
     document.getElementById('azToSongBtn').addEventListener('click', () => {
       openSongMode(true);
@@ -1671,6 +1750,10 @@
       renderSongMode(false);
       return;
     }
+    if (appMode === 'video') {
+      renderVideoMode();
+      return;
+    }
 
     const scene = SCENES[currentIndex];
     isPeekCovered = scene.type === 'hero' && startCovered;
@@ -1701,13 +1784,22 @@
               <span class="mode-desc">알파벳 26 그림 단어 놀이터</span>
             </button>
           </div>
-          <button class="mode-song-btn" id="startSongBtn" type="button">
-            <div class="mode-song-icon" aria-hidden="true">🎵</div>
-            <div class="mode-song-copy">
-              <span class="mode-title">🎵 알파벳 노래 (ABC Song)</span>
-              <span class="mode-desc">신나는 노래에 맞춰 A~Z 그림 카드가 반짝반짝!</span>
-            </div>
-          </button>
+          <div class="mode-song-row">
+            <button class="mode-song-btn mode-song-btn--video" id="startVideoBtn" type="button">
+              <div class="mode-song-icon" aria-hidden="true">🎬</div>
+              <div class="mode-song-copy">
+                <span class="mode-title">🎬 알파벳 노래 영상 보기</span>
+                <span class="mode-desc">ABC Song 유튜브 영상 + 좋아요·구독</span>
+              </div>
+            </button>
+            <button class="mode-song-btn" id="startSongBtn" type="button">
+              <div class="mode-song-icon" aria-hidden="true">🎵</div>
+              <div class="mode-song-copy">
+                <span class="mode-title">🎵 알파벳 노래 카드</span>
+                <span class="mode-desc">노래 박자에 맞춰 A~Z 카드 반짝!</span>
+              </div>
+            </button>
+          </div>
         </section>
       `;
 
@@ -1722,6 +1814,10 @@
         spawnSparkles(e.clientX || window.innerWidth / 2, e.clientY || window.innerHeight / 2, ['🔤', '⭐', '✨']);
         openAzMode(0);
       };
+      const startVideoHandler = (e) => {
+        spawnSparkles(e.clientX || window.innerWidth / 2, e.clientY || window.innerHeight / 2, ['🎬', '🎵', '⭐', '✨']);
+        openVideoMode();
+      };
       const startSongHandler = (e) => {
         spawnSparkles(e.clientX || window.innerWidth / 2, e.clientY || window.innerHeight / 2, ['🎵', '🎶', '⭐', '✨']);
         openSongMode(true);
@@ -1729,6 +1825,7 @@
       document.getElementById('startMachinesBtn').addEventListener('click', startMachinesHandler);
       document.getElementById('coverIconBtn').addEventListener('click', startMachinesHandler);
       document.getElementById('startAzBtn').addEventListener('click', startAzHandler);
+      document.getElementById('startVideoBtn').addEventListener('click', startVideoHandler);
       document.getElementById('startSongBtn').addEventListener('click', startSongHandler);
       return;
     }
