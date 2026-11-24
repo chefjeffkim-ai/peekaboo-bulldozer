@@ -335,7 +335,41 @@
   const SPEED_STORAGE_KEY = 'peekaboo_voice_speed';
   const AUDIO_BASE_PATH = 'audio/';
 
-  let appMode = 'machines'; // 'machines' (includes cover at index 0) | 'az'
+  // Exact timestamp sync map for deploy/audio/abc_song.mp3 (2:28)
+  const ABC_SONG_TIMELINE = [
+    { start: 0.0,   end: 14.5,  type: 'intro',   title: '🎵 알파벳 노래가 시작돼요!', sub: 'Get ready to sing A to Z!' },
+    { start: 14.5,  end: 17.7,  type: 'letter',  azIndex: 0 },  // A Apple
+    { start: 17.7,  end: 20.1,  type: 'letter',  azIndex: 1 },  // B Bulldozer
+    { start: 20.1,  end: 23.6,  type: 'letter',  azIndex: 2 },  // C Car
+    { start: 23.6,  end: 27.4,  type: 'letter',  azIndex: 3 },  // D Dog
+    { start: 27.4,  end: 31.6,  type: 'letter',  azIndex: 4 },  // E Elephant
+    { start: 31.6,  end: 33.7,  type: 'letter',  azIndex: 5 },  // F Fish
+    { start: 33.7,  end: 36.8,  type: 'letter',  azIndex: 6 },  // G Grapes
+    { start: 36.8,  end: 51.3,  type: 'chorus',  title: '🎶 Sing the alphabet, sing along!', sub: '신나게 함께 노래해요!' },
+    { start: 51.3,  end: 55.2,  type: 'letter',  azIndex: 7 },  // H Hat
+    { start: 55.2,  end: 59.5,  type: 'letter',  azIndex: 8 },  // I Ice cream
+    { start: 59.5,  end: 63.5,  type: 'letter',  azIndex: 9 },  // J Jelly
+    { start: 63.5,  end: 67.3,  type: 'letter',  azIndex: 10 }, // K Kite
+    { start: 67.3,  end: 69.5,  type: 'letter',  azIndex: 11 }, // L Lion
+    { start: 69.5,  end: 73.3,  type: 'letter',  azIndex: 12 }, // M Monkey
+    { start: 73.3,  end: 76.7,  type: 'letter',  azIndex: 13 }, // N Nose
+    { start: 76.7,  end: 91.5,  type: 'chorus',  title: '🎶 Sing it loud and happy today!', sub: '알파벳 친구들과 함께 놀아요!' },
+    { start: 91.5,  end: 95.6,  type: 'letter',  azIndex: 14 }, // O Orange
+    { start: 95.6,  end: 99.6,  type: 'letter',  azIndex: 15 }, // P Pig
+    { start: 99.6,  end: 101.6, type: 'letter',  azIndex: 16 }, // Q Queen
+    { start: 101.6, end: 105.0, type: 'letter',  azIndex: 17 }, // R Rabbit
+    { start: 105.0, end: 107.6, type: 'letter',  azIndex: 18 }, // S Sun
+    { start: 107.6, end: 111.5, type: 'letter',  azIndex: 19 }, // T Truck
+    { start: 111.5, end: 115.6, type: 'letter',  azIndex: 20 }, // U Umbrella
+    { start: 115.6, end: 119.5, type: 'letter',  azIndex: 21 }, // V Van
+    { start: 119.5, end: 123.6, type: 'letter',  azIndex: 22 }, // W Water
+    { start: 123.6, end: 127.4, type: 'letter',  azIndex: 23 }, // X Xylophone
+    { start: 127.4, end: 129.6, type: 'letter',  azIndex: 24 }, // Y Yo-yo
+    { start: 129.6, end: 131.9, type: 'letter',  azIndex: 25 }, // Z Zebra
+    { start: 131.9, end: 999.0, type: 'finale',  title: '🎉 A to Z! Yay! 참 잘했어요!', sub: 'Learning letters is a ball!' },
+  ];
+
+  let appMode = 'machines'; // 'machines' (includes cover at index 0) | 'az' | 'song'
   let currentIndex = 0;
   let azIndex = 0;
   let azGridOpen = false;
@@ -343,6 +377,13 @@
   let soundEnabled = true;
   let isPeekCovered = false;
   let voiceSpeedMode = loadSavedSpeedMode(); // 'slow' | 'normal'
+
+  // Dedicated preloaded ABC Song audio element for instant <0.1s mobile playback
+  const abcSongAudio = new Audio(`${AUDIO_BASE_PATH}abc_song.mp3`);
+  abcSongAudio.preload = 'auto';
+  abcSongAudio.playsInline = true;
+  let songRafId = null;
+  let lastSungKey = '';
 
   let audioCtx = null;
   let activeSfxBus = null;
@@ -615,7 +656,22 @@
    *  1) Priority 1: Pre-generated Gemini audio in deploy/audio/ (<id>.mp3 or .wav) with playbackRate
    *  2) Priority 2: Automatic error-free fallback to browser Web Speech API (en-US)
    */
+  function stopAbcSong(resetToZero = true) {
+    if (songRafId) {
+      cancelAnimationFrame(songRafId);
+      songRafId = null;
+    }
+    try {
+      abcSongAudio.pause();
+      if (resetToZero) {
+        abcSongAudio.currentTime = 0;
+      }
+    } catch (_) {}
+    lastSungKey = '';
+  }
+
   function playVoiceLine(audioId, delayMs = 95, onComplete = null) {
+    stopAbcSong(false);
     stopActiveVoice();
     if (!soundEnabled || !audioId) return;
     const fallbackText = AUDIO_MANIFEST[audioId] || '';
@@ -1097,7 +1153,7 @@
   }
 
   function updateChrome() {
-    if (appMode === 'az') {
+    if (appMode === 'az' || appMode === 'song') {
       document.body.classList.remove('theme-sleepy');
       if (homeBtn) homeBtn.hidden = false;
       progressDots.style.visibility = 'hidden';
@@ -1138,6 +1194,7 @@
   }
 
   function openAzMode(startIdx = 0) {
+    stopAbcSong(true);
     stopActiveVoice();
     stopActiveSfx();
     appMode = 'az';
@@ -1146,12 +1203,268 @@
     renderAzMode(true);
   }
 
+  function openSongMode(autoPlay = true) {
+    stopActiveVoice();
+    stopActiveSfx();
+    appMode = 'song';
+    renderSongMode(autoPlay);
+  }
+
   function goHome() {
+    stopAbcSong(true);
     stopActiveVoice();
     stopActiveSfx();
     appMode = 'machines';
     currentIndex = 0;
     renderScene(false);
+  }
+
+  function formatSongTime(sec) {
+    if (!Number.isFinite(sec) || sec < 0) return '0:00';
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${String(s).padStart(2, '0')}`;
+  }
+
+  function getSongSegment(timeSec) {
+    for (let i = 0; i < ABC_SONG_TIMELINE.length; i++) {
+      const seg = ABC_SONG_TIMELINE[i];
+      if (timeSec >= seg.start && timeSec < seg.end) {
+        return seg;
+      }
+    }
+    return ABC_SONG_TIMELINE[0];
+  }
+
+  function renderSongMode(autoPlay = false) {
+    const words = window.AZ_WORDS || [];
+    updateChrome();
+    lastSungKey = '';
+
+    const cardsHtml = words
+      .map(
+        (w, i) => `
+          <button
+            class="song-card-item"
+            type="button"
+            data-song-az="${i}"
+            style="--az-bg:${w.bg};--az-accent:${w.accent}"
+            aria-label="${w.letter} ${w.word} (${w.ko})"
+          >
+            <div class="song-card-svg">${w.svg}</div>
+            <div class="song-card-letter">${w.letter}${w.lower}</div>
+            <div class="song-card-word">${w.word}</div>
+          </button>
+        `
+      )
+      .join('');
+
+    bookStage.innerHTML = `
+      <section class="song-shell">
+        <div class="az-header-row">
+          <div class="az-mode-badge">🎵 알파벳 노래 (ABC Song)</div>
+          <div class="az-header-actions">
+            <button class="az-view-toggle" id="songToAzBtn" type="button">🔤 A~Z 카드 놀이</button>
+          </div>
+        </div>
+
+        <div class="song-spotlight" id="songSpotlight">
+          <div class="song-spot-visual" id="songSpotVisual" aria-hidden="true">🎵</div>
+          <div class="song-spot-info">
+            <div class="song-spot-letter" id="songSpotLetter">알파벳 노래 (ABC Song)</div>
+            <div class="song-spot-sub" id="songSpotSub">재생 버튼을 눌러 A부터 Z까지 함께 불러요!</div>
+          </div>
+        </div>
+
+        <div class="song-progress-wrap">
+          <div class="song-progress-track">
+            <div class="song-progress-fill" id="songProgressFill"></div>
+          </div>
+          <span class="song-time-label" id="songTimeLabel">0:00 / 2:28</span>
+        </div>
+
+        <div class="song-az-grid" id="songAzGrid" aria-label="노래와 연동되는 A부터 Z 그림 카드">
+          ${cardsHtml}
+        </div>
+
+        <div class="song-controls">
+          <button class="song-ctrl-btn" id="songPlayPauseBtn" type="button">
+            <span aria-hidden="true">▶️</span>
+            <span>재생하기</span>
+          </button>
+          <button class="song-ctrl-btn song-ctrl-btn--restart" id="songRestartBtn" type="button">
+            <span aria-hidden="true">🔄</span>
+            <span>처음부터</span>
+          </button>
+        </div>
+      </section>
+    `;
+
+    const spotlight = document.getElementById('songSpotlight');
+    const spotVisual = document.getElementById('songSpotVisual');
+    const spotLetter = document.getElementById('songSpotLetter');
+    const spotSub = document.getElementById('songSpotSub');
+    const progressFill = document.getElementById('songProgressFill');
+    const timeLabel = document.getElementById('songTimeLabel');
+    const playPauseBtn = document.getElementById('songPlayPauseBtn');
+    const restartBtn = document.getElementById('songRestartBtn');
+    const songGrid = document.getElementById('songAzGrid');
+    const cardEls = Array.from(songGrid.querySelectorAll('.song-card-item'));
+
+    document.getElementById('songToAzBtn').addEventListener('click', () => {
+      playSoundEffect('chime');
+      openAzMode(0);
+    });
+
+    const updatePlayButtonUI = () => {
+      const playing = !abcSongAudio.paused && !abcSongAudio.ended;
+      spotlight.classList.toggle('is-playing', playing);
+      playPauseBtn.classList.toggle('song-ctrl-btn--playing', playing);
+      playPauseBtn.innerHTML = playing
+        ? '<span aria-hidden="true">⏸️</span><span>일시정지</span>'
+        : '<span aria-hidden="true">▶️</span><span>재생하기</span>';
+    };
+
+    const syncSongVisuals = () => {
+      if (appMode !== 'song') return;
+      const cur = abcSongAudio.currentTime || 0;
+      const dur = Number.isFinite(abcSongAudio.duration) && abcSongAudio.duration > 0 ? abcSongAudio.duration : 148;
+      const pct = Math.min(100, Math.max(0, (cur / dur) * 100));
+      progressFill.style.width = `${pct.toFixed(2)}%`;
+      timeLabel.textContent = `${formatSongTime(cur)} / ${formatSongTime(dur)}`;
+
+      const seg = getSongSegment(cur);
+      const segKey = seg.type === 'letter' ? `L_${seg.azIndex}` : `${seg.type}_${seg.start}`;
+      if (segKey !== lastSungKey) {
+        lastSungKey = segKey;
+        cardEls.forEach((el) => el.classList.remove('is-singing'));
+
+        if (seg.type === 'letter' && words[seg.azIndex]) {
+          const w = words[seg.azIndex];
+          spotlight.style.setProperty('--spot-bg', w.bg);
+          spotlight.style.setProperty('--spot-accent', w.accent);
+          spotVisual.innerHTML = w.svg;
+          spotLetter.textContent = `${w.letter}${w.lower} · ${w.word} (${w.ko})`;
+          spotSub.textContent = w.sentence;
+
+          const activeCard = cardEls[seg.azIndex];
+          if (activeCard) {
+            activeCard.classList.add('is-singing');
+            if (typeof activeCard.scrollIntoView === 'function') {
+              activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+            if (!abcSongAudio.paused) {
+              const r = activeCard.getBoundingClientRect();
+              spawnSparkles(r.left + r.width / 2, r.top + r.height / 2, w.sparkles || ['⭐', '✨'], 4);
+            }
+          }
+        } else {
+          spotlight.style.setProperty('--spot-bg', 'linear-gradient(135deg, #FFF5F6 0%, #FFF8E6 55%, #EFF7FD 100%)');
+          spotlight.style.setProperty('--spot-accent', '#EBC968');
+          spotVisual.textContent = seg.type === 'finale' ? '🎉' : '🎶';
+          spotLetter.textContent = seg.title;
+          spotSub.textContent = seg.sub;
+        }
+      }
+
+      if (!abcSongAudio.paused && !abcSongAudio.ended) {
+        songRafId = requestAnimationFrame(syncSongVisuals);
+      } else {
+        songRafId = null;
+      }
+    };
+
+    const startPlayback = () => {
+      if (!soundEnabled) {
+        soundEnabled = true;
+        soundToggleBtn.setAttribute('aria-pressed', 'true');
+        soundIcon.textContent = '🔊';
+        soundLabel.textContent = '소리 켜짐';
+      }
+      // Guarantee zero audio collision with any word voice or SFX
+      stopActiveVoice();
+      stopActiveSfx();
+      ensureAudio();
+
+      if (abcSongAudio.ended) {
+        abcSongAudio.currentTime = 0;
+      }
+      const p = abcSongAudio.play();
+      updatePlayButtonUI();
+      if (songRafId) cancelAnimationFrame(songRafId);
+      songRafId = requestAnimationFrame(syncSongVisuals);
+      if (p && typeof p.then === 'function') {
+        p.then(() => {
+          updatePlayButtonUI();
+          if (!songRafId && appMode === 'song') {
+            songRafId = requestAnimationFrame(syncSongVisuals);
+          }
+        }).catch(() => {
+          updatePlayButtonUI();
+        });
+      }
+    };
+
+    abcSongAudio.onended = () => {
+      if (appMode !== 'song') return;
+      updatePlayButtonUI();
+      syncSongVisuals();
+      spawnSparkles(window.innerWidth / 2, window.innerHeight * 0.35, ['🎉', '⭐', '🎵', '✨'], 12);
+    };
+
+    playPauseBtn.addEventListener('click', () => {
+      if (!abcSongAudio.paused && !abcSongAudio.ended) {
+        abcSongAudio.pause();
+        if (songRafId) {
+          cancelAnimationFrame(songRafId);
+          songRafId = null;
+        }
+        updatePlayButtonUI();
+      } else {
+        startPlayback();
+      }
+    });
+
+    restartBtn.addEventListener('click', () => {
+      lastSungKey = '';
+      abcSongAudio.currentTime = 0;
+      startPlayback();
+    });
+
+    // Direct toddler touch on any A~Z picture card while listening
+    cardEls.forEach((cardEl) => {
+      cardEl.addEventListener('pointerdown', (e) => {
+        if (e.button && e.button !== 0) return;
+        const idx = Number(cardEl.dataset.songAz);
+        const w = words[idx];
+        if (!w) return;
+        cardEl.classList.remove('is-tapped');
+        void cardEl.offsetWidth;
+        cardEl.classList.add('is-tapped');
+
+        const rect = cardEl.getBoundingClientRect();
+        const cx = e.clientX || rect.left + rect.width / 2;
+        const cy = e.clientY || rect.top + rect.height / 2;
+        spawnSparkles(cx, cy, w.sparkles || ['⭐', '✨'], 6);
+
+        // If song is paused, also preview the card spotlight & gentle chime
+        if (abcSongAudio.paused) {
+          playSoundEffect(w.sfx || 'chime');
+          spotlight.style.setProperty('--spot-bg', w.bg);
+          spotlight.style.setProperty('--spot-accent', w.accent);
+          spotVisual.innerHTML = w.svg;
+          spotLetter.textContent = `${w.letter}${w.lower} · ${w.word} (${w.ko})`;
+          spotSub.textContent = w.sentence;
+        }
+      });
+    });
+
+    if (autoPlay) {
+      startPlayback();
+    } else {
+      updatePlayButtonUI();
+      syncSongVisuals();
+    }
   }
 
   function renderAzMode(autoPlayCurrent = false) {
@@ -1197,9 +1510,12 @@
       <section class="az-card-shell">
         <div class="az-header-row">
           <div class="az-mode-badge">🔤 A~Z 알파벳 그림 단어 놀이터 (${azIndex + 1}/26)</div>
-          <button class="az-view-toggle" id="azViewToggleBtn" type="button">
-            ${azGridOpen ? '🔍 크게 보기' : '🗂️ 전체 A~Z 보기'}
-          </button>
+          <div class="az-header-actions">
+            <button class="az-song-pill" id="azToSongBtn" type="button">🎵 알파벳 노래</button>
+            <button class="az-view-toggle" id="azViewToggleBtn" type="button">
+              ${azGridOpen ? '🔍 크게 보기' : '🗂️ 전체 A~Z 보기'}
+            </button>
+          </div>
         </div>
 
         <div class="az-strip" id="azStrip" role="tablist" aria-label="알파벳 A부터 Z 선택">
@@ -1259,6 +1575,10 @@
     if (activeChip && typeof activeChip.scrollIntoView === 'function') {
       activeChip.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     }
+
+    document.getElementById('azToSongBtn').addEventListener('click', () => {
+      openSongMode(true);
+    });
 
     document.getElementById('azViewToggleBtn').addEventListener('click', () => {
       playSoundEffect('chime');
@@ -1347,6 +1667,10 @@
       renderAzMode(false);
       return;
     }
+    if (appMode === 'song') {
+      renderSongMode(false);
+      return;
+    }
 
     const scene = SCENES[currentIndex];
     isPeekCovered = scene.type === 'hero' && startCovered;
@@ -1377,6 +1701,13 @@
               <span class="mode-desc">알파벳 26 그림 단어 놀이터</span>
             </button>
           </div>
+          <button class="mode-song-btn" id="startSongBtn" type="button">
+            <div class="mode-song-icon" aria-hidden="true">🎵</div>
+            <div class="mode-song-copy">
+              <span class="mode-title">🎵 알파벳 노래 (ABC Song)</span>
+              <span class="mode-desc">신나는 노래에 맞춰 A~Z 그림 카드가 반짝반짝!</span>
+            </div>
+          </button>
         </section>
       `;
 
@@ -1391,9 +1722,14 @@
         spawnSparkles(e.clientX || window.innerWidth / 2, e.clientY || window.innerHeight / 2, ['🔤', '⭐', '✨']);
         openAzMode(0);
       };
+      const startSongHandler = (e) => {
+        spawnSparkles(e.clientX || window.innerWidth / 2, e.clientY || window.innerHeight / 2, ['🎵', '🎶', '⭐', '✨']);
+        openSongMode(true);
+      };
       document.getElementById('startMachinesBtn').addEventListener('click', startMachinesHandler);
       document.getElementById('coverIconBtn').addEventListener('click', startMachinesHandler);
       document.getElementById('startAzBtn').addEventListener('click', startAzHandler);
+      document.getElementById('startSongBtn').addEventListener('click', startSongHandler);
       return;
     }
 
@@ -1604,6 +1940,7 @@
 
   function goToScene(index, startCovered = false, celebrateOnArrival = false) {
     if (index < 0 || index >= SCENES.length) return;
+    stopAbcSong(true);
     stopActiveVoice();
     stopActiveSfx();
     currentIndex = index;
@@ -1692,8 +2029,16 @@
     soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
     soundLabel.textContent = soundEnabled ? '소리 켜짐' : '소리 꺼짐';
     if (!soundEnabled) {
+      stopAbcSong(false);
       stopActiveVoice();
       stopActiveSfx();
+      const ppBtn = document.getElementById('songPlayPauseBtn');
+      const spot = document.getElementById('songSpotlight');
+      if (spot) spot.classList.remove('is-playing');
+      if (ppBtn) {
+        ppBtn.classList.remove('song-ctrl-btn--playing');
+        ppBtn.innerHTML = '<span aria-hidden="true">▶️</span><span>재생하기</span>';
+      }
     } else {
       playSoundEffect('chime');
     }
